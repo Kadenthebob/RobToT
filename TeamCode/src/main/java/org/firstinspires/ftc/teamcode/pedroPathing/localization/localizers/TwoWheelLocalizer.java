@@ -59,8 +59,8 @@ public class TwoWheelLocalizer extends Localizer { // todo: make two wheel odo w
     private double previousIMUOrientation;
     private double deltaRadians;
     private double totalHeading;
-    public static double FORWARD_TICKS_TO_INCHES = 8192 * 1.37795 * 2 * Math.PI * 0.5008239963;
-    public static double STRAFE_TICKS_TO_INCHES = 8192 * 1.37795 * 2 * Math.PI * 0.5018874659;
+    public static double FORWARD_TICKS_TO_INCHES = (48 * Math.PI) / (2000 * 25.4);
+    public static double STRAFE_TICKS_TO_INCHES = (48 * Math.PI) / (2000 * 25.4);
 
     /**
      * This creates a new TwoWheelLocalizer from a HardwareMap, with a starting Pose at (0,0)
@@ -81,8 +81,8 @@ public class TwoWheelLocalizer extends Localizer { // todo: make two wheel odo w
      */
     public TwoWheelLocalizer(HardwareMap map, Pose setStartPose) {
         // TODO: replace these with your encoder positions
-        forwardEncoderPose = new Pose(-18.5/25.4 - 0.1, 1984.1680430417755, 0);
-        strafeEncoderPose = new Pose(-2211.0437516847396, -1.1/25.4-0.23, Math.toRadians(90));
+        forwardEncoderPose = new Pose(12.372/2, 11.024/2-4.07, 0);
+        strafeEncoderPose = new Pose(15.302/2-8.1, -5-9/16, Math.toRadians(90));
 
         hardwareMap = map;
 
