@@ -41,8 +41,8 @@ public class DriveEncoderLocalizer extends Localizer {
     public static double FORWARD_TICKS_TO_INCHES = 1;
     public static double STRAFE_TICKS_TO_INCHES = 1;
     public static double TURN_TICKS_TO_RADIANS = 1;
-    public static double ROBOT_WIDTH = 1;
-    public static double ROBOT_LENGTH = 1;
+    public static double ROBOT_WIDTH = 15.302;
+    public static double ROBOT_LENGTH = 15.236;
 
     /**
      * This creates a new DriveEncoderLocalizer from a HardwareMap, with a starting Pose at (0,0)
