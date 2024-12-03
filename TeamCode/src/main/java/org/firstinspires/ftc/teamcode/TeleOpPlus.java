@@ -40,11 +40,13 @@ public class TeleOpPlus extends LinearOpMode {
 
         follower = new Follower(hardwareMap);
         follower.setStartingPose(new Pose(0,0,0));
+
         follower.resetIMU();
 
 //        drive.setTeamRed();
 //        drive.pauseCamera();
         waitForStart();
+        follower.startTeleopDrive();
         intk.setTrunkPos(190);
         intk.setTwistPos(90);
 //        drive.readPos();

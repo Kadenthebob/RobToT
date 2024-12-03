@@ -30,11 +30,11 @@ public final class HumanPlayerAuto extends LinearOpMode {
     Pose grab1 = new Pose(9, 8.1, Math.toRadians(0));
     Pose grab2 = new Pose(9, 24, Math.toRadians(0));
     Pose grabCP = new Pose(28,24,Math.toRadians(0));
-    Pose place1 = new Pose(38.55, 59, Math.toRadians(0));
-    Pose place2 = new Pose(38.55, 61, Math.toRadians(0));
-    Pose place3 = new Pose(38.55, 63, Math.toRadians(0));
-    Pose place4 = new Pose(38.55, 65, Math.toRadians(0));
-    Pose place5 = new Pose(38.55, 67, Math.toRadians(0));
+    Pose place1 = new Pose(36, 59, Math.toRadians(0));
+    Pose place2 = new Pose(36, 61, Math.toRadians(0));
+    Pose place3 = new Pose(36, 63, Math.toRadians(0));
+    Pose place4 = new Pose(36, 65, Math.toRadians(0));
+    Pose place5 = new Pose(36, 67, Math.toRadians(0));
 
 
 
@@ -56,7 +56,7 @@ public final class HumanPlayerAuto extends LinearOpMode {
                 .addPath(
                         // Line 2
                         new BezierCurve(
-                                new Point(36.692, 66.692, Point.CARTESIAN),
+                                new Point(place1),
                                 new Point(22.154, 20.077, Point.CARTESIAN),
                                 new Point(70.385, 46.154, Point.CARTESIAN),
                                 new Point(67.846, 23.769, Point.CARTESIAN)
@@ -184,7 +184,7 @@ public final class HumanPlayerAuto extends LinearOpMode {
                                 )
                         ),
                         //1st Place on Pole
-                        follower.waitForPoint(grab1),
+                        follower.waitForPoint(place1),
                         lift.setVertLifterPos(1500,1),
                         intk.IntakeOut(),
                         //Drag Samples to Human Player && Approach Human Player

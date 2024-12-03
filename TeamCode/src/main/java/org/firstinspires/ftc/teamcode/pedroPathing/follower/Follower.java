@@ -1091,7 +1091,7 @@ public class Follower {
         return new Action() {
             @Override
             public boolean run(@NonNull TelemetryPacket packet) {
-                return (Math.abs(poseUpdater.getPose().getY()-y)>=Math.abs(.03*poseUpdater.getPose().getY()));
+                return (Math.abs(poseUpdater.getPose().getY()-y)>=Math.abs(.015*poseUpdater.getPose().getY()));
             }
         };
     }
@@ -1100,7 +1100,7 @@ public class Follower {
         return new Action() {
             @Override
             public boolean run(@NonNull TelemetryPacket packet) {
-                return (Math.abs(poseUpdater.getPose().getHeading()-yaw)>=Math.abs(.03*poseUpdater.getPose().getHeading()));
+                return (Math.abs(poseUpdater.getPose().getHeading()-yaw)>=Math.abs(.015*poseUpdater.getPose().getHeading()));
             }
         };
     }
@@ -1109,7 +1109,7 @@ public class Follower {
         return new Action() {
             @Override
             public boolean run(@NonNull TelemetryPacket packet) {
-                return (Math.abs(poseUpdater.getPose().getY()-y)>=Math.abs(.03*poseUpdater.getPose().getY())&&Math.abs(poseUpdater.getPose().getX()-x)>=Math.abs(.03*poseUpdater.getPose().getX()));
+                return (Math.abs(poseUpdater.getPose().getY()-y)>=Math.abs(.015*poseUpdater.getPose().getY())&&Math.abs(poseUpdater.getPose().getX()-x)>=Math.abs(.015*poseUpdater.getPose().getX()));
             }
         };
     }
@@ -1118,7 +1118,7 @@ public class Follower {
         return new Action() {
             @Override
             public boolean run(@NonNull TelemetryPacket packet) {
-                return (Math.abs(poseUpdater.getPose().getY()-pos.getY())>=Math.abs(.03*poseUpdater.getPose().getY())&&Math.abs(poseUpdater.getPose().getX()-pos.getX())>=Math.abs(.03*poseUpdater.getPose().getX()));
+                return (Math.abs(poseUpdater.getPose().getY()-pos.getY())>=Math.abs(.015*poseUpdater.getPose().getY())&&Math.abs(poseUpdater.getPose().getX()-pos.getX())>=Math.abs(.015*poseUpdater.getPose().getX()));
             }
         };
     }
