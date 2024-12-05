@@ -231,6 +231,15 @@ public class Camera {
         }
     }
 
+    public double angleCor(double ang){
+        if(Math.abs(ang)>Math.abs(ang+Math.PI*2)){
+            ang = ang+Math.PI*2;
+        }else if(Math.abs(ang)>Math.abs(ang-Math.PI*2)){
+            ang = ang-Math.PI*2;
+        }
+        return ang;
+    }
+
     public double getObjX(){
         return pipeline.getX();
     }
@@ -240,6 +249,8 @@ public class Camera {
     public double getObjRot(){
         return pipeline.getRotation();
     }
+    public double getTargetX(){return PARAMS.objTargetX;}
+    public double getTargetY(){return PARAMS.objTargetY;}
     public void pauseCamera(){
         cam.pauseViewport();
     }
@@ -258,4 +269,5 @@ public class Camera {
     public void yellowTrackingOff(){
         pipeline.trackYellow = false;
     }
+
 }

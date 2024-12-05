@@ -25,11 +25,17 @@ import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.Action;
+import com.acmerobotics.roadrunner.Pose2d;
+import com.acmerobotics.roadrunner.PoseVelocity2d;
+import com.acmerobotics.roadrunner.SleepAction;
+import com.acmerobotics.roadrunner.TranslationalVelConstraint;
+import com.acmerobotics.roadrunner.Vector2d;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.configuration.typecontainers.MotorConfigurationType;
+import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.teamcode.pedroPathing.localization.Pose;
@@ -48,6 +54,9 @@ import org.firstinspires.ftc.teamcode.pedroPathing.util.Drawing;
 import org.firstinspires.ftc.teamcode.pedroPathing.util.FilteredPIDFController;
 import org.firstinspires.ftc.teamcode.pedroPathing.util.KalmanFilter;
 import org.firstinspires.ftc.teamcode.pedroPathing.util.PIDFController;
+import org.firstinspires.ftc.teamcode.roadrunner.MecanumDrive;
+import org.firstinspires.ftc.teamcode.sections.Camera;
+import org.firstinspires.ftc.teamcode.sections.Camera.Params;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -487,6 +496,10 @@ public class Follower {
     public void startTeleopDrive() {
         breakFollowing();
         teleopDrive = true;
+    }
+    public void stopTeleopDrive() {
+        breakFollowing();
+        teleopDrive = false;
     }
 
     /**
@@ -1119,6 +1132,77 @@ public class Follower {
             @Override
             public boolean run(@NonNull TelemetryPacket packet) {
                 return (Math.abs(poseUpdater.getPose().getY()-pos.getY())>=Math.abs(.015*poseUpdater.getPose().getY())&&Math.abs(poseUpdater.getPose().getX()-pos.getX())>=Math.abs(.015*poseUpdater.getPose().getX()));
+            }
+        };
+    }
+    public Action AutoGrabLoop(Camera cam){
+        return new Action() {
+            double x,y,rotation,targetYaw;
+            ElapsedTime time = new ElapsedTime();
+            @Override
+            public boolean run (@NonNull TelemetryPacket packet){
+                if(time.time()<5&&(x==-1 && y==-1)){
+                    x = cam.getObjX();
+                    y = cam.getObjY();
+                    rotation = cam.getObjRot();
+                    targetYaw = poseUpdater.getPose().getHeading();
+                    breakFollowing();
+                    startTeleopDrive();
+                    return true;
+
+                }else if((x==-1 && y==-1)){
+                    //if no obj detected
+                    return false;
+                }else if((cam.getTargetX()-x)/cam.getTargetX()>.025||(cam.getObjY()-y)/cam.getObjY()>.025){
+                    x = cam.getObjX();
+                    y = cam.getObjY();
+                    double xChange = Math.min(Math.max(.05*(cam.getObjX()-x),-.5),.5);
+                    double yChange = Math.min(Math.max(.05*(cam.getObjY()-y),-.5),.5);
+                    double headingChange = cam.angleCor(1*(targetYaw - poseUpdater.getPose().getHeading()));
+
+                    setTeleOpMovementVectors(yChange,xChange,headingChange);
+
+                    packet.put("obj x", x);
+                    packet.put("obj y", y);
+                    return true;
+                }
+                stopTeleopDrive();
+                return false;
+            }
+        };
+    }
+    public Action AutoGrabWallLoop(Camera cam){
+        return new Action() {
+            double x,y,rotation,targetYaw;
+            ElapsedTime time = new ElapsedTime();
+            @Override
+            public boolean run (@NonNull TelemetryPacket packet){
+                x = cam.getObjX();
+                if(time.time()<5&&(x==-1 && y==-1)){
+                    x = cam.getObjX();
+                    rotation = cam.getObjRot();
+                    targetYaw = poseUpdater.getPose().getHeading();
+                    breakFollowing();
+                    startTeleopDrive();
+                    return true;
+
+                }else if((x==-1 && y==-1)){
+                    //if no obj detected
+                    stopTeleopDrive();
+                    return false;
+                }else if((cam.getTargetX()-x)/cam.getTargetX()>.025||(cam.getObjY()-y)/cam.getObjY()>.025){
+                    x = cam.getObjX();
+                    double xChange = Math.min(Math.max(.05*(cam.getObjX()-x),-.5),.5);
+                    double headingChange = cam.angleCor(1*(targetYaw - poseUpdater.getPose().getHeading()));
+
+                    setTeleOpMovementVectors(0,xChange,headingChange);
+
+                    packet.put("obj x", x);
+                    packet.put("obj y", y);
+                    return true;
+                }
+                stopTeleopDrive();
+                return false;
             }
         };
     }

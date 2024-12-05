@@ -74,13 +74,13 @@ public class TeleOpPlus extends LinearOpMode {
 
         if(!driverOveride) {
             if (gamepad1.dpad_up) {
-                xMov=1;
-            } else if (gamepad1.dpad_down) {
-                xMov=-1;
-            } else if (gamepad1.dpad_left){
                 yMov=1;
-            } else if (gamepad1.dpad_right){
+            } else if (gamepad1.dpad_down) {
                 yMov=-1;
+            } else if (gamepad1.dpad_left){
+                xMov=1;
+            } else if (gamepad1.dpad_right){
+                xMov=-1;
             }
             else {
                 xMov = 0;
