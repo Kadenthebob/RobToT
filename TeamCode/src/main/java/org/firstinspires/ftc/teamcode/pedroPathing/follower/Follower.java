@@ -1158,6 +1158,16 @@ public class Follower {
             }
         };
     }
+
+    public Action waitForPose(Pose pos) {
+        return new Action() {
+            @Override
+            public boolean run(@NonNull TelemetryPacket packet) {
+                return (pos.roughlyEquals(getPose()));
+            }
+        };
+    }
+
     public Action AutoGrabLoop(Camera cam){
         return new Action() {
             double x,y,rotation,targetYaw;

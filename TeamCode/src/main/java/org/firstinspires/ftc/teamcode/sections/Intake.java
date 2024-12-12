@@ -15,22 +15,30 @@ public class Intake {
         public double trunkServoMaxTurn = 360*5-180;
         public double trunkPowerCoeff = 2;
 
-        public double twistMaxDegree = 180;//200
+        public double armMaxDegree = 180;//200
+        public double armServoMaxTurn = 300;
+        public double armPowerCoeff = 2;
+
+        public double twistMaxDegree = 360;//200
         public double twistServoMaxTurn = 360*5-180;
         public double twistPowerCoeff = 2;
 
     }
     double trunkPos = 0;
     double twistPos = 0;
+    double armPos = 0;
+    double armOffest = 0;
+    double trunkOffset = 180;
     Params PARAMS = new Params();
     CRServo intakeR, intakeL;
-    public Servo trunkR, trunkL, twist;
+    public Servo trunkR, trunkL, twist, arm;
     public Intake(HardwareMap hardwareMap){
         intakeR = hardwareMap.get(CRServo.class,"intakeR");
         intakeL = hardwareMap.get(CRServo.class,"intakeL");
         intakeR.setDirection(CRServo.Direction.FORWARD);
         intakeL.setDirection(CRServo.Direction.REVERSE);
 
+        arm = hardwareMap.get(Servo.class,"elbow");
         trunkR = hardwareMap.get(Servo.class,"trunkR");
         trunkL = hardwareMap.get(Servo.class,"trunkL");
         twist = hardwareMap.get(Servo.class,"twist");
@@ -63,6 +71,7 @@ public class Intake {
             }
         };
     }
+
     public Action IntakeOut(){
         return new Action(){
             @Override
@@ -87,12 +96,12 @@ public class Intake {
 
         pos/=PARAMS.trunkServoMaxTurn; //converts from degrees(0-360) to servo position(0-1)
 
-        trunkR.setPosition(pos+(180/PARAMS.trunkServoMaxTurn));
-        trunkL.setPosition(pos+(180/PARAMS.trunkServoMaxTurn));
+        trunkR.setPosition(pos+(trunkOffset/PARAMS.trunkServoMaxTurn));
+        trunkL.setPosition(pos+(trunkOffset/PARAMS.trunkServoMaxTurn));
     }
 
     public void setTrunkPower(double pow){
-        trunkPos = PARAMS.trunkServoMaxTurn*((trunkR.getPosition() + trunkL.getPosition())/2)-180;
+        trunkPos = PARAMS.trunkServoMaxTurn*((trunkR.getPosition() + trunkL.getPosition())/2)-trunkOffset;
         setTrunkPos(trunkPos + pow*PARAMS.trunkPowerCoeff);
     }
 
@@ -101,6 +110,30 @@ public class Intake {
             @Override
             public boolean run(@NonNull TelemetryPacket packet) {
                 setTrunkPos(degree);
+                return false;
+            }
+        };
+    }
+
+    public void setArmPos(double degree){
+        double pos = Math.max(Math.min(degree,PARAMS.armMaxDegree),0); //sets a limit to what you can set the servo position to go to
+
+        pos/=PARAMS.armServoMaxTurn; //converts from degrees(0-360) to servo position(0-1)
+
+//        arm.setPosition(pos+(armOffest/PARAMS.armServoMaxTurn));
+        arm.setPosition(pos);
+    }
+
+    public void setArmPower(double pow){
+        armPos = PARAMS.armServoMaxTurn*(arm.getPosition())-armOffest;
+        setArmPos(armPos + pow*PARAMS.armPowerCoeff);
+    }
+
+    public Action SetArmPos(double degree){
+        return new Action(){
+            @Override
+            public boolean run(@NonNull TelemetryPacket packet) {
+                setArmPos(degree);
                 return false;
             }
         };
