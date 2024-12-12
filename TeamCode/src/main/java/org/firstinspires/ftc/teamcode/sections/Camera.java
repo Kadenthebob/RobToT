@@ -32,6 +32,9 @@ public class Camera {
         public int objTargetY = 110;
     }
     Params PARAMS = new Params();
+    public CameraDetectPipeline getPipeline(){
+        return pipeline;
+    }
     public Camera(HardwareMap hardwareMap,String team){
         color = team;
 
@@ -61,7 +64,7 @@ public class Camera {
     class CameraDetectPipeline extends OpenCvPipeline
     {
 
-        RotatedRect target;
+        public RotatedRect target;
         // switch use HSV values
         // Divide H by 2
         Scalar blueL = new Scalar(200/2, .6*255, .1*255);
@@ -229,6 +232,10 @@ public class Camera {
                 return -1;
             }
         }
+
+        public RotatedRect getTarget() {
+            return target;
+        }
     }
 
     public double angleCor(double ang){
@@ -248,6 +255,9 @@ public class Camera {
     }
     public double getObjRot(){
         return pipeline.getRotation();
+    }
+    public RotatedRect getTargetObj(){
+        return pipeline.getTarget();
     }
     public double getTargetX(){return PARAMS.objTargetX;}
     public double getTargetY(){return PARAMS.objTargetY;}

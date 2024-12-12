@@ -40,6 +40,7 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.teamcode.pedroPathing.localization.Pose;
 import org.firstinspires.ftc.teamcode.pedroPathing.localization.PoseUpdater;
+import org.firstinspires.ftc.teamcode.pedroPathing.pathGeneration.BezierLine;
 import org.firstinspires.ftc.teamcode.pedroPathing.pathGeneration.BezierPoint;
 import org.firstinspires.ftc.teamcode.pedroPathing.pathGeneration.MathFunctions;
 import org.firstinspires.ftc.teamcode.pedroPathing.pathGeneration.Path;
@@ -154,6 +155,8 @@ public class Follower {
     public static boolean useCentripetal = true;
     public static boolean useHeading = true;
     public static boolean useDrive = true;
+
+    public boolean Looping = false;
 
     /**
      * This creates a new Follower given a HardwareMap.
@@ -594,10 +597,30 @@ public class Follower {
 
     public Action Update(){
         return new Action(){
+            boolean start = true;
             @Override
             public boolean run(@NonNull TelemetryPacket packet) {
-                update();
-                return true;
+                if(start == true){
+                    Looping = true;
+                    start = false;
+                    update();
+                    return true;
+                }
+                if(Looping == true) {
+                    update();
+                    return true;
+                }
+                return false;
+            }
+        };
+    }
+    public Action StopUpdate(){
+        return new Action(){
+            boolean start = false;
+            @Override
+            public boolean run(@NonNull TelemetryPacket packet) {
+                Looping = false;
+                return false;
             }
         };
     }
@@ -1171,34 +1194,97 @@ public class Follower {
             }
         };
     }
-    public Action AutoGrabWallLoop(Camera cam){
+    public Action AutoGrabWallLoop(Camera cam, double xTar){
         return new Action() {
             double x,y,rotation,targetYaw;
             ElapsedTime time = new ElapsedTime();
             @Override
             public boolean run (@NonNull TelemetryPacket packet){
                 x = cam.getObjX();
-                if(time.time()<5&&(x==-1 && y==-1)){
+                if(time.time()<5&&(x==-1)){
                     x = cam.getObjX();
                     rotation = cam.getObjRot();
                     targetYaw = poseUpdater.getPose().getHeading();
+                    packet.put("obj x", x);
+                    packet.put("obj y", y);
+                    packet.put("overide", teleopDrive);
+
                     breakFollowing();
-                    startTeleopDrive();
                     return true;
 
-                }else if((x==-1 && y==-1)){
+                }else if((x==-1)){
                     //if no obj detected
                     stopTeleopDrive();
                     return false;
-                }else if((cam.getTargetX()-x)/cam.getTargetX()>.025||(cam.getObjY()-y)/cam.getObjY()>.025){
+                }else if(((cam.getTargetX()-x)/cam.getTargetX()>.025||Math.abs(xTar-getPose().getX())>.8)&&x!=-1){
+                    teleopDrive = true;
                     x = cam.getObjX();
-                    double xChange = Math.min(Math.max(.05*(cam.getObjX()-x),-.5),.5);
+                    double xChange = Math.min(Math.max(.05*(cam.getTargetX()-cam.getObjX()),-.3),.3);
+                    double yChange = Math.min(Math.max(.05*(xTar-getPose().getX()),-.5),.5);
                     double headingChange = cam.angleCor(1*(targetYaw - poseUpdater.getPose().getHeading()));
 
-                    setTeleOpMovementVectors(0,xChange,headingChange);
+                    setTeleOpMovementVectors(yChange,xChange,headingChange);
 
                     packet.put("obj x", x);
                     packet.put("obj y", y);
+                    packet.put("overide", teleopDrive);
+                    return true;
+                }
+                stopTeleopDrive();
+                return false;
+            }
+        };
+    }
+
+    public Action AutoGrabWallLoopTraj(Camera cam, double xTar){
+        return new Action() {
+            double x,y,rotation,targetYaw;
+            ElapsedTime time = new ElapsedTime();
+            Pose start;
+            Pose endPoint;
+            double cam2inch;
+            @Override
+            public boolean run (@NonNull TelemetryPacket packet){
+                x = cam.getObjX();
+                if(time.time()<5&&(x==-1)){
+                    x = cam.getObjX();
+                    rotation = cam.getObjRot();
+                    targetYaw = poseUpdater.getPose().getHeading();
+                    packet.put("obj x", x);
+                    packet.put("obj y", y);
+                    packet.put("overide", teleopDrive);
+
+                    start = new Pose(getPose().getX(),getPose().getY(),getPose().getHeading());
+
+                    breakFollowing();
+                    return true;
+
+                }else if((x==-1)){
+                    //if no obj detected
+                    stopTeleopDrive();
+                    return false;
+                }else if(endPoint.rotate(getPose().getHeading()).roughlyEquals(getPose())&&x!=-1){
+                    x = cam.getObjX();
+                    cam2inch = 1.5 / Math.min(cam.getTargetObj().size.height, cam.getTargetObj().size.width);
+
+                    double xChange = (cam.getTargetX()-cam.getObjX())*cam2inch;
+
+                    endPoint = new Pose(xTar,xChange,0);
+
+                    followPath(pathBuilder().addPath(
+                            // Line 1
+                            new BezierLine(
+                                    new Point(start),
+                                    new Point(endPoint.rotate(start.getHeading()))
+                            )
+                            )
+                            .setConstantHeadingInterpolation(start.getHeading())
+                            .build()
+                    );
+
+                    packet.put("obj x", x);
+                    packet.put("obj y", y);
+                    packet.put("overide", teleopDrive);
                     return true;
                 }
                 stopTeleopDrive();

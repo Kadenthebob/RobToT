@@ -216,4 +216,11 @@ public class Pose {
     public String toString() {
         return "(" + getX() + ", " + getY() + ", " + Math.toDegrees(getHeading()) + ")";
     }
+
+    public Pose rotate(double yaw){
+        Pose end;
+
+        end = new Pose(x*Math.cos(yaw)-y*Math.sin(yaw),y*Math.cos(yaw)+x*Math.sin(yaw),yaw+heading);
+        return end;
+    }
 }
