@@ -20,10 +20,10 @@ public class Lifters {
         public int lifterLimitHigh = 4350;
         public int lifterLimitLow = 0;
         public double lifterCorCoef = .0008;
-        public double horPowerCoeff = 2;
+        public double horPowerCoeff = 4;
         public double horLifterOffset = .04;
 
-        public double horLifterArmMaxDegree = 95;
+        public double horLifterArmMaxDegree = 120;
         public double horServoMaxTurn = 300/2;
         //divide by two because of the 1:2 gear ratio on the extendo arm
     }

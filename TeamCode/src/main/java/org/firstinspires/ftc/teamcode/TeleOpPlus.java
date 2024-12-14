@@ -48,8 +48,10 @@ public class TeleOpPlus extends LinearOpMode {
         waitForStart();
         follower.startTeleopDrive();
         intk.setArmPos(0);
-        intk.setTrunkPos(190);
+        intk.setTrunkPit();
         intk.setTwistPos(90);
+        lift.setHorLifterPos(.8406);
+
 //        drive.readPos();
         while(opModeIsActive()){
             looping();
@@ -88,11 +90,7 @@ public class TeleOpPlus extends LinearOpMode {
                 yMov = 0;
             }
         }
-        if(gamepad2.dpad_down){
-            intk.setArmPos(0);
-        }else if(gamepad2.dpad_up){
-            intk.setArmPos(180);
-        }
+
         double brakeCoeff = 1-gamepad1.right_trigger;
         follower.setTeleOpMovementVectors((-gamepad1.left_stick_y+yMov)*brakeCoeff, (-gamepad1.left_stick_x+xMov)*brakeCoeff, -gamepad1.right_stick_x, true);
         follower.update();
@@ -104,31 +102,36 @@ public class TeleOpPlus extends LinearOpMode {
             intk.intakeOut();
         }else intk.intakeOff();  //turn off when not touching those two buttons
 
-        //lifter control code
+        if(gamepad2.dpad_down){
+            intk.setTrunkWall();
+        }else if(gamepad2.dpad_up){
+            intk.setTrunkPit();
+        }
+
+        if(gamepad2.dpad_left) {  //go down to specimen wall
+            runningActions.add(lift.setVertLifterPos(700, .5));
+        }
+        else if(gamepad2.dpad_right){ //go up to pole
+            runningActions.add(lift.setVertLifterPos(2520, .5));
+        }
+        else{  //lift using triggers
+            if(Math.abs(-gamepad2.right_trigger+gamepad2.left_trigger)>0.01){
+                lift.vertLifterR.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+                lift.vertLifterL.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+                lift.setVertLifterPower(-gamepad2.right_trigger+gamepad2.left_trigger);
+            }else{
+                lift.lifterOverideOff();
+            }
+        }
 
         intk.setTwistPower(gamepad2.left_stick_x); //twist using left joystick
+        intk.setArmPower(-gamepad2.right_stick_y);
         if(gamepad2.left_bumper){  //left bumper = extendo forward
             lift.setHorLifterPower(1);
         } else if(gamepad2.right_bumper) { //right bumper = extendo backward
             lift.setHorLifterPower(-1);
         }
-        intk.setTrunkPower(-gamepad2.right_stick_y); //trunk up and down using right joystick
-//        if(gamepad2.x && !clickedX){
-//            clickedX = true;
-//            runningActions.add(
-//                    new SequentialAction(
-//                    lift.setVertLifterPos(200, .5),
-//                             new ParallelAction(
-//                                     intk.IntakeIn(),
-//                                     lift.setVertLifterPos(100, .5)
-//                             )
-//                    )
-//            );
-//        } else if(gamepad1.x) {
-//            clickedX = true;
-//        } else if(!gamepad1.x) {
-//            clickedX = false;
-//        }
+
 
         telemetry.addData("Driver Overide: ", driverOveride);  //print out data
         telemetry.addData("X: ", follower.getPose().getX());

@@ -38,22 +38,22 @@ public final class AutoGrabTest extends LinearOpMode {
 
     //All paths stored here
     public void buildPaths(){
-        camGrab = follower.pathBuilder()
-                .addPath(
-                        // Line 1
-                        new BezierLine(
-                                new Point(startPose),
-                                new Point(15,0)
-                        )
+//        camGrab = follower.pathBuilder()
+//                .addPath(
+//                        // Line 1
+//                        new BezierLine(
+//                                new Point(startPose),
+//                                new Point(15,0)
+//                        )
+//
+//
+//                )
 
-
-                )
-
-                .setLinearHeadingInterpolation(Math.toRadians(0), Math.toRadians(0))
-                .build();
+//                .setLinearHeadingInterpolation(Math.toRadians(0), Math.toRadians(0))
+//                .build();
 
         placeFirst = follower.pathBuilder()
-                .addPath(
+                    .addPath(
                         // Line 1
                         new BezierLine(
                                 new Point(startPose),

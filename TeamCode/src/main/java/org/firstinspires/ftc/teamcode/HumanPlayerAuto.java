@@ -240,7 +240,7 @@ public final class HumanPlayerAuto extends LinearOpMode {
                 follower.Update(),
                 //main sequential
                 new SequentialAction(
-                        intk.SetTrunkPos(90),
+                        //intk.SetTrunkPos(90),
                         intk.SetTwistPos(90),
                         //Aproach Pole
                         new ParallelAction(
@@ -353,7 +353,7 @@ public final class HumanPlayerAuto extends LinearOpMode {
                         follower.waitForPoint(place4),
                         lift.setVertLifterPos(1500,1),
 
-                        intk.SetTrunkPos(190),
+                        //intk.SetTrunkPos(190),
                         lift.setVertLifterPos(0,1)
 
                 )
