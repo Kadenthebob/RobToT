@@ -1,11 +1,8 @@
 package org.firstinspires.ftc.teamcode;
 
 import com.acmerobotics.roadrunner.ParallelAction;
-import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.SequentialAction;
 import com.acmerobotics.roadrunner.SleepAction;
-import com.acmerobotics.roadrunner.TranslationalVelConstraint;
-import com.acmerobotics.roadrunner.Vector2d;
 import com.acmerobotics.roadrunner.ftc.Actions;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
@@ -20,13 +17,13 @@ import org.firstinspires.ftc.teamcode.sections.Intake;
 import org.firstinspires.ftc.teamcode.sections.Lifters;
 
 
-@Autonomous(name = "HP Auto", group = "Auto Testing")
-public final class HumanPlayerAuto extends LinearOpMode {
+@Autonomous(name = "1 Spec Auto", group = "Auto Testing")
+public final class OneSpecimineAuto extends LinearOpMode {
 
     PathChain placeFirst, slideBlocks,grabSecond,placeSecond,grabThird,placeThird,grabFourth,placeFourth,hockeyFirst,hockeySecond,hockeyThird,hockeyGrab;
     Follower follower;
 
-    Pose startPose = new Pose(9, 48, Math.toRadians(0));
+    Pose startPose = new Pose(9, 48, Math.toRadians(180));
     Pose hockey1 = new Pose(29, 33.5, Math.toRadians(-30));
     Pose hockey15 = new Pose(29, 33.5, Math.toRadians(-150));
     Pose hockey2 = new Pose(29, 23.5, Math.toRadians(-30));
@@ -35,7 +32,7 @@ public final class HumanPlayerAuto extends LinearOpMode {
     Pose grab1 = new Pose(9, 8.1, Math.toRadians(0));
     Pose grab2 = new Pose(9, 24, Math.toRadians(0));
     Pose grabCP = new Pose(28,24,Math.toRadians(0));
-    Pose place1 = new Pose(36, 59, Math.toRadians(0));
+    Pose place1 = new Pose(36, 60, Math.toRadians(0));
     Pose place2 = new Pose(36, 61, Math.toRadians(0));
     Pose place3 = new Pose(36, 63, Math.toRadians(0));
     Pose place4 = new Pose(36, 65, Math.toRadians(0));
@@ -54,7 +51,7 @@ public final class HumanPlayerAuto extends LinearOpMode {
                                 new Point(place1)
                         )
                 )
-                .setLinearHeadingInterpolation(Math.toRadians(0), Math.toRadians(0))
+                .setLinearHeadingInterpolation(Math.toRadians(180), Math.toRadians(180))
                 .build();
 
         hockeyFirst = follower.pathBuilder()
@@ -127,14 +124,14 @@ public final class HumanPlayerAuto extends LinearOpMode {
                                 new Point(70.385, 46.154, Point.CARTESIAN),
                                 new Point(67.846, 23.769, Point.CARTESIAN)
                         ))
-                .setConstantHeadingInterpolation(Math.toRadians(0))
+                .setConstantHeadingInterpolation(Math.toRadians(180))
                 .addPath(
                         // Line 3
                         new BezierLine(
                                 new Point(67.846, 23.769, Point.CARTESIAN),
                                 new Point(17.769, 23.769, Point.CARTESIAN)
                         ))
-                .setConstantHeadingInterpolation(Math.toRadians(0))
+                .setConstantHeadingInterpolation(Math.toRadians(180))
                 .addPath(
                         // Line 4
                         new BezierCurve(
@@ -142,14 +139,14 @@ public final class HumanPlayerAuto extends LinearOpMode {
                                 new Point(70.846, 25.385, Point.CARTESIAN),
                                 new Point(67.615, 13.385, Point.CARTESIAN)
                         ))
-                .setConstantHeadingInterpolation(Math.toRadians(0))
+                .setConstantHeadingInterpolation(Math.toRadians(180))
                 .addPath(
                         // Line 5
                         new BezierLine(
                                 new Point(67.615, 13.385, Point.CARTESIAN),
                                 new Point(17.769, 13.385, Point.CARTESIAN)
                         ))
-                .setConstantHeadingInterpolation(Math.toRadians(0))
+                .setConstantHeadingInterpolation(Math.toRadians(180))
                 .addPath(
                         // Line 6
                         new BezierCurve(
@@ -157,7 +154,7 @@ public final class HumanPlayerAuto extends LinearOpMode {
                                 new Point(71.769, 15.462, Point.CARTESIAN),
                                 new Point(67.846, 8.077, Point.CARTESIAN)
                         ))
-                .setConstantHeadingInterpolation(Math.toRadians(0))
+                .setLinearHeadingInterpolation(Math.toRadians(180),Math.toRadians(0))
                 .addPath(
                         // Line 7
                         new BezierLine(
@@ -174,7 +171,7 @@ public final class HumanPlayerAuto extends LinearOpMode {
                                 new Point(place2)
                         )
                 )
-                .setConstantHeadingInterpolation(Math.toRadians(0))
+                .setLinearHeadingInterpolation(Math.toRadians(0),Math.toRadians(180))
         .build();
 
         grabThird = follower.pathBuilder()
@@ -185,7 +182,7 @@ public final class HumanPlayerAuto extends LinearOpMode {
                                 new Point(grab2)
                         )
                 )
-                .setConstantHeadingInterpolation(Math.toRadians(0))
+                .setLinearHeadingInterpolation(Math.toRadians(180),Math.toRadians(0))
         .build();
 
         placeThird = follower.pathBuilder()
@@ -195,7 +192,7 @@ public final class HumanPlayerAuto extends LinearOpMode {
                                 new Point(place3)
                         )
                 )
-                .setConstantHeadingInterpolation(Math.toRadians(0))
+                .setLinearHeadingInterpolation(Math.toRadians(0),Math.toRadians(180))
         .build();
 
         grabFourth = follower.pathBuilder()
@@ -206,7 +203,7 @@ public final class HumanPlayerAuto extends LinearOpMode {
                                 new Point(grab2)
                         )
                 )
-                .setConstantHeadingInterpolation(Math.toRadians(0))
+                .setConstantHeadingInterpolation(Math.toRadians(180))
         .build();
 
         placeFourth = follower.pathBuilder()
@@ -250,7 +247,7 @@ public final class HumanPlayerAuto extends LinearOpMode {
                                 )
                         ),
                         //1st Place on Pole
-                        follower.waitForPoint(place1),
+                        new SleepAction(2.5),
                         lift.setVertLifterPos(1500,1),
                         intk.IntakeOut(),
                         //Drag Samples to Human Player && Approach Human Player
@@ -287,86 +284,12 @@ public final class HumanPlayerAuto extends LinearOpMode {
                         new ParallelAction(
                                 follower.FollowPath(slideBlocks,true),
                                 new SequentialAction(
-                                        lift.setVertLifterPos(680,1),
+                                        lift.setVertLifterPos(0,1),
                                         intk.IntakeOff(),
-                                        follower.waitForPoint(new Pose(67.846,8.1)),
-                                        intk.IntakeIn()
+                                        follower.waitForPoint(new Pose(67.846,8.1))
                                 )
                         ),
-                        follower.waitForPoint(grab1),
-                        //Lift Up 2nd Specimen
-                        new ParallelAction(
-                                follower.FollowPath(hockeyGrab,true),
-                                new SequentialAction(
-                                        lift.setVertLifterPos(680,1),
-                                        intk.IntakeIn()
-                                )
-                        ),
-                        follower.waitForPoint(grab1),
-                        lift.setVertLifterPos(850,1),
-                        //Aproach Pole
-                        new ParallelAction(
-                                follower.FollowPath(placeSecond,true),
-                                new SequentialAction(
-                                        intk.IntakeOff(),
-                                        lift.setVertLifterPos(2520,1)
-                                )
-                        ),
-                        follower.waitForPoint(place2),
-                        //2nd Place on Pole
-                        lift.setVertLifterPos(1500,1),
-                        intk.IntakeOut(),
-                        //Approach Human Player
-                        new ParallelAction(
-                                follower.FollowPath(grabThird,true),
-                                new SequentialAction(
-                                        new SleepAction(.75),
-                                        lift.setVertLifterPos(680,1),
-                                        intk.IntakeIn()
-                                )
-                        ),
-                        follower.waitForPoint(grab2),
-                        //Lift Up Specimen
-                        new SleepAction(.3),
-                        lift.setVertLifterPos(850,1),
-                        //Aproach Pole
-                        new ParallelAction(
-                                follower.FollowPath(placeThird,true),
-                                new SequentialAction(
-                                        intk.IntakeOff(),
-                                        lift.setVertLifterPos(2520,1)
-                                )
-                        ),
-                        //3rd Place on Pole
-                        follower.waitForPoint(place3),
-                        lift.setVertLifterPos(1500,1),
-                        intk.IntakeOut(),
-                        //Approach Human Player
-                        new ParallelAction(
-                                follower.FollowPath(grabFourth),
-                                new SequentialAction(
-                                        new SleepAction(.75),
-                                        lift.setVertLifterPos(680,1),
-                                        intk.IntakeIn()
-                                )
-                        ),
-                        //Lift Up Specimen
-                        follower.waitForPoint(grab2),
-                        new SleepAction(.3),
-                        lift.setVertLifterPos(850,1),
-                        //Aproach Pole
-                        new ParallelAction(
-                                follower.FollowPath(placeFourth,true),
-                                new SequentialAction(
-                                        intk.IntakeOff(),
-                                        lift.setVertLifterPos(2520,1)
-                                )
-                        ),
-                        follower.waitForPoint(place4),
-                        lift.setVertLifterPos(1500,1),
-
-                        //intk.SetTrunkPos(190),
-                        lift.setVertLifterPos(0,1)
+                        follower.waitForPoint(grab1)
 
                 )
             )

@@ -48,9 +48,9 @@ public class TeleOpPlus extends LinearOpMode {
         waitForStart();
         follower.startTeleopDrive();
         intk.setArmPos(0);
-        intk.setTrunkPit();
+        intk.setTrunkWall();
         intk.setTwistPos(90);
-        lift.setHorLifterPos(.8406);
+        lift.setHorLifterPos(120);
 
 //        drive.readPos();
         while(opModeIsActive()){
@@ -92,7 +92,7 @@ public class TeleOpPlus extends LinearOpMode {
         }
 
         double brakeCoeff = 1-gamepad1.right_trigger;
-        follower.setTeleOpMovementVectors((-gamepad1.left_stick_y+yMov)*brakeCoeff, (-gamepad1.left_stick_x+xMov)*brakeCoeff, -gamepad1.right_stick_x, true);
+        follower.setTeleOpMovementVectors((gamepad1.left_stick_y+yMov)*brakeCoeff, (gamepad1.left_stick_x+xMov)*brakeCoeff, -gamepad1.right_stick_x, true);
         follower.update();
 
         //gamepad 2
@@ -143,6 +143,7 @@ public class TeleOpPlus extends LinearOpMode {
         telemetry.addData("Trunk Pos: ", intk.trunkR.getPosition());
         telemetry.addData("extendoL Pos: ", lift.horLifterL.getPosition());
         telemetry.addData("extendoR Pos: ", lift.horLifterR.getPosition());
+        telemetry.addData("arm: ", intk.arm.getPosition());
         telemetry.update();
 
     }
