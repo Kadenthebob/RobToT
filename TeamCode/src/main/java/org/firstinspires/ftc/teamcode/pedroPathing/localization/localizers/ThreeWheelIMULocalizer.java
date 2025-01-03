@@ -64,7 +64,7 @@ public class ThreeWheelIMULocalizer extends Localizer {
     private double deltaRadians;
     private double totalHeading;
     public static double FORWARD_TICKS_TO_INCHES = (48 * Math.PI) / (2000 * 25.4);//8192 * 1.37795 * 2 * Math.PI * 0.5008239963;
-    public static double STRAFE_TICKS_TO_INCHES = -(48 * Math.PI) / (2000 * 25.4);//8192 * 1.37795 * 2 * Math.PI * 0.5018874659;
+    public static double STRAFE_TICKS_TO_INCHES = (48 * Math.PI) / (2000 * 25.4);//8192 * 1.37795 * 2 * Math.PI * 0.5018874659;
     public static double TURN_TICKS_TO_RADIANS = (48 * Math.PI) / (2000 * 25.4);//8192 * 1.37795 * 2 * Math.PI * 0.5;
 
     public static boolean useIMU = true;
@@ -96,7 +96,7 @@ public class ThreeWheelIMULocalizer extends Localizer {
         // TODO: replace these with your encoder positions
         leftEncoderPose = new Pose(11.024/2-4.07, 12.372/2, 0);
         rightEncoderPose = new Pose(11.024/2-4.07, -12.372/2, 0);
-        strafeEncoderPose = new Pose(-5-9/16, -(15.302/2-8.1), Math.toRadians(90));
+        strafeEncoderPose = new Pose(-5-9/16, 15.375/2-7.625, Math.toRadians(90));
 
         // TODO: replace these with your encoder ports
         leftEncoder = new Encoder(hardwareMap.get(DcMotorEx.class, "leftFo2"));
@@ -106,7 +106,7 @@ public class ThreeWheelIMULocalizer extends Localizer {
         // TODO: reverse any encoders necessary
         leftEncoder.setDirection(Encoder.REVERSE);
         rightEncoder.setDirection(Encoder.FORWARD);
-        strafeEncoder.setDirection(Encoder.REVERSE);
+        strafeEncoder.setDirection(Encoder.FORWARD);
 
         setStartPose(setStartPose);
         timer = new NanoTimer();

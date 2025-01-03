@@ -81,8 +81,8 @@ public class TwoWheelLocalizer extends Localizer { // todo: make two wheel odo w
      */
     public TwoWheelLocalizer(HardwareMap map, Pose setStartPose) {
         // TODO: replace these with your encoder positions
-        forwardEncoderPose = new Pose(12.372/2, 11.024/2-4.07, 0);
-        strafeEncoderPose = new Pose(15.302/2-8.1, -5-9/16, Math.toRadians(90));
+        forwardEncoderPose = new Pose(11.024/2-4.07, -12.372/2, 0);
+        strafeEncoderPose = new Pose(-5-9/16, -(15.302/2-8.1), Math.toRadians(90));
 
         hardwareMap = map;
 

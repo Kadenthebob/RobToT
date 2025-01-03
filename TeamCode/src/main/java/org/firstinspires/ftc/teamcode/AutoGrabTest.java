@@ -25,7 +25,7 @@ public final class AutoGrabTest extends LinearOpMode {
     Follower follower;
 
     Pose startPose = new Pose(0, 0, Math.toRadians(0));
-    Pose grab1 = new Pose(9, 8.1, Math.toRadians(0));
+    Pose grab1 = new Pose(48, 0, Math.toRadians(0));
     Pose grab2 = new Pose(9, 24, Math.toRadians(0));
     Pose grabCP = new Pose(28,24,Math.toRadians(0));
     Pose place1 = new Pose(36, 59, Math.toRadians(0));
@@ -57,113 +57,11 @@ public final class AutoGrabTest extends LinearOpMode {
                         // Line 1
                         new BezierLine(
                                 new Point(startPose),
-                                new Point(place1)
+                                new Point(grab1)
                         )
                 )
                 .setLinearHeadingInterpolation(Math.toRadians(0), Math.toRadians(0))
                 .build();
-
-        slideBlocks = follower.pathBuilder()
-                .addPath(
-                        // Line 2
-                        new BezierCurve(
-                                new Point(place1),
-                                new Point(22.154, 20.077, Point.CARTESIAN),
-                                new Point(70.385, 46.154, Point.CARTESIAN),
-                                new Point(67.846, 23.769, Point.CARTESIAN)
-                        ))
-                .setConstantHeadingInterpolation(Math.toRadians(0))
-                .addPath(
-                        // Line 3
-                        new BezierLine(
-                                new Point(67.846, 23.769, Point.CARTESIAN),
-                                new Point(17.769, 23.769, Point.CARTESIAN)
-                        ))
-                .setConstantHeadingInterpolation(Math.toRadians(0))
-                .addPath(
-                        // Line 4
-                        new BezierCurve(
-                                new Point(17.769, 23.769, Point.CARTESIAN),
-                                new Point(70.846, 25.385, Point.CARTESIAN),
-                                new Point(67.615, 13.385, Point.CARTESIAN)
-                        ))
-                .setConstantHeadingInterpolation(Math.toRadians(0))
-                .addPath(
-                        // Line 5
-                        new BezierLine(
-                                new Point(67.615, 13.385, Point.CARTESIAN),
-                                new Point(17.769, 13.385, Point.CARTESIAN)
-                        ))
-                .setConstantHeadingInterpolation(Math.toRadians(0))
-                .addPath(
-                        // Line 6
-                        new BezierCurve(
-                                new Point(17.769, 13.385, Point.CARTESIAN),
-                                new Point(71.769, 15.462, Point.CARTESIAN),
-                                new Point(67.846, 8.077, Point.CARTESIAN)
-                        ))
-                .setConstantHeadingInterpolation(Math.toRadians(0))
-                .addPath(
-                        // Line 7
-                        new BezierLine(
-                                new Point(67.846, 8.1, Point.CARTESIAN),
-                                new Point(grab1)
-                        ))
-                .setConstantHeadingInterpolation(Math.toRadians(0))
-                .build();
-
-        placeSecond = follower.pathBuilder()
-                .addPath(
-                        new BezierCurve(
-                                new Point(grab1),
-                                new Point(place2)
-                        )
-                )
-                .setConstantHeadingInterpolation(Math.toRadians(0))
-        .build();
-
-        grabThird = follower.pathBuilder()
-                .addPath(
-                        new BezierCurve(
-                                new Point(place2),
-                                new Point(grabCP),
-                                new Point(grab2)
-                        )
-                )
-                .setConstantHeadingInterpolation(Math.toRadians(0))
-        .build();
-
-        placeThird = follower.pathBuilder()
-                .addPath(
-                        new BezierCurve(
-                                new Point(grab2),
-                                new Point(place3)
-                        )
-                )
-                .setConstantHeadingInterpolation(Math.toRadians(0))
-        .build();
-
-        grabFourth = follower.pathBuilder()
-                .addPath(
-                        new BezierCurve(
-                                new Point(place3),
-                                new Point(grabCP),
-                                new Point(grab2)
-                        )
-                )
-                .setConstantHeadingInterpolation(Math.toRadians(0))
-        .build();
-
-        placeFourth = follower.pathBuilder()
-                .addPath(
-                        new BezierCurve(
-                                new Point(grab2),
-                                new Point(place4)
-                        )
-                )
-                .setConstantHeadingInterpolation(Math.toRadians(0))
-        .build();
-
     }
 
     @Override
@@ -177,8 +75,7 @@ public final class AutoGrabTest extends LinearOpMode {
 
         Lifters lift = new Lifters(hardwareMap);
         Intake intk = new Intake(hardwareMap);
-        Camera cam = new Camera(hardwareMap,"red");
-
+        Camera cam = new Camera(hardwareMap,true);
         waitForStart();
         Actions.runBlocking(
            //Follower Class loop
@@ -186,7 +83,18 @@ public final class AutoGrabTest extends LinearOpMode {
                 follower.Update(),
                 //main sequential
                 new SequentialAction(
-                        follower.AutoGrabWallLoopTraj(cam,15)
+                        follower.goToPose(new Pose(48,0,0)),
+                        follower.waitForPose(grab1),
+                        follower.goToPose(new Pose(0,0,0)),
+                        follower.waitForPose(new Pose(0,0,0)),
+                        intk.SetTrunkPit(),
+                        lift.SetHorLifterPos(90),
+                        new SleepAction(1),
+                        follower.AutoGrab(cam,intk,lift),
+                        follower.goToPose(new Pose(0,0,0)),
+                        intk.SetTrunkWall(),
+                        follower.waitForPose(new Pose(0,0,0)),
+                        follower.StopUpdate()
 
                 )
             )

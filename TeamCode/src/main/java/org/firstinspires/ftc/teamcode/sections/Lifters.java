@@ -3,30 +3,37 @@ package org.firstinspires.ftc.teamcode.sections;
 
 import androidx.annotation.NonNull;
 
+import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.Action;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.HardwareMap;
+import com.qualcomm.robotcore.hardware.PwmControl;
 import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.hardware.ServoImplEx;
 
 public class Lifters {
     public DcMotor vertLifterR, vertLifterL;
-    public Servo  horLifterR, horLifterL;
+    public ServoImplEx horLifterR, horLifterL;
     double horLiftPos = 0;
     int targetPos = 0;
     boolean lifterWhileOn = false;
     boolean lifterOveride = false;
     public static class Params {
-        public int lifterLimitHigh = 4350;
+        public int lifterLimitHigh = 4050;
         public int lifterLimitLow = 0;
         public double lifterCorCoef = .0008;
-        public double horPowerCoeff = 4;
-        public double horLifterOffset = .04;
-
-        public double horLifterArmMaxDegree = 120;
-        public double horServoMaxTurn = 300/2;
         //divide by two because of the 1:2 gear ratio on the extendo arm
     }
+    @Config
+    public static class ServoExtendParams{
+        public static double EXTEND_OFFSET = 0;
+
+        public static double EXTEND_DEGREE_LIMIT = 90;//200
+        public static double EXTEND_DEGREE_MAX = 150;
+        public static double EXTEND_POWER_COEFF = 4;
+    }
+    ServoExtendParams servoExtendParams = new ServoExtendParams();
     Params PARAMS = new Params();
     public Lifters(HardwareMap hardwareMap) {
         vertLifterR = hardwareMap.get(DcMotor.class, "lifterR");
@@ -42,20 +49,23 @@ public class Lifters {
         vertLifterL.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
 
-        horLifterR = hardwareMap.get(Servo.class,"horLifterR");
-        horLifterL = hardwareMap.get(Servo.class,"horLifterL");
-        horLifterR.setDirection(Servo.Direction.REVERSE);
-        horLifterL.setDirection(Servo.Direction.FORWARD);
+        horLifterR = hardwareMap.get(ServoImplEx.class,"horLifterR");
+        horLifterL = hardwareMap.get(ServoImplEx.class,"horLifterL");
+        horLifterR.setDirection(Servo.Direction.FORWARD);
+        horLifterL.setDirection(Servo.Direction.REVERSE);
+        horLifterR.setPwmRange(new PwmControl.PwmRange(500,2500));
+        horLifterL.setPwmRange(new PwmControl.PwmRange(500,2500));
+
     }
 
     public class LifterWhile implements Action {
         double rPos,lPos,lifterAvgPos;
-        int pos = targetPos;
         double power = .1;
 
         @Override
         public boolean run(@NonNull TelemetryPacket packet) {
             if(!lifterOveride) {
+                int pos = targetPos;
                 rPos = vertLifterR.getCurrentPosition();
                 lPos = vertLifterL.getCurrentPosition();
                 lifterAvgPos = (rPos + lPos) / 2;
@@ -68,7 +78,7 @@ public class Lifters {
                 vertLifterL.setPower(power + ((lifterAvgPos - lPos) * PARAMS.lifterCorCoef));
             }
 
-            return (Math.abs(pos-lifterAvgPos) > 15 || lifterWhileOn);
+            return (Math.abs(targetPos-lifterAvgPos) > 15 || lifterWhileOn);
         }
     }
 
@@ -148,7 +158,7 @@ public class Lifters {
                 vertLifterR.setPower(power + ((lifterAvgPos - rPos) * PARAMS.lifterCorCoef));
                 vertLifterL.setPower(power + ((lifterAvgPos - lPos) * PARAMS.lifterCorCoef));
 
-                if(Math.abs(pos-lifterAvgPos) > 15){
+                if(Math.abs(pos-lifterAvgPos) > 50){
                     lifterOveride = true;
                     return true;
                 }else{
@@ -186,19 +196,19 @@ public class Lifters {
 
 
     public void setHorLifterPower(double pow){
-        horLiftPos = PARAMS.horServoMaxTurn*(horLifterL.getPosition()-PARAMS.horLifterOffset);
-        setHorLifterPos(horLiftPos+pow*PARAMS.horPowerCoeff);
+        horLiftPos = ServoExtendParams.EXTEND_DEGREE_MAX*(horLifterL.getPosition())-ServoExtendParams.EXTEND_OFFSET;
+        setHorLifterPos(horLiftPos+pow*ServoExtendParams.EXTEND_POWER_COEFF);
         //convert average lift pos to degrees then multiply by coeff
     }
 
     //stupid setup sh*t
     public void setHorLifterPos(double degree){
-        double pos = Math.max(Math.min(degree,PARAMS.horLifterArmMaxDegree),0); //sets a limit to what you can set the servo position to go to
+        double pos = Math.max(Math.min(degree,servoExtendParams.EXTEND_DEGREE_LIMIT),0); //sets a limit to what you can set the servo position to go to
 
-        pos/=PARAMS.horServoMaxTurn; //converts from degrees(0-360) to servo position(0-1)
+        pos/=ServoExtendParams.EXTEND_DEGREE_MAX; //converts from degrees(0-360) to servo position(0-1)
 
-        horLifterR.setPosition(pos+PARAMS.horLifterOffset);
-        horLifterL.setPosition(pos+PARAMS.horLifterOffset);
+        horLifterR.setPosition(pos+ServoExtendParams.EXTEND_OFFSET/servoExtendParams.EXTEND_DEGREE_MAX);
+        horLifterL.setPosition(pos+ServoExtendParams.EXTEND_OFFSET/servoExtendParams.EXTEND_DEGREE_MAX);
     }
     public Action SetHorLifterPos(double degree) {
         return new Action(){

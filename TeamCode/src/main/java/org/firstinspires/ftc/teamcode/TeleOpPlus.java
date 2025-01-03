@@ -3,15 +3,14 @@ package org.firstinspires.ftc.teamcode;
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.Action;
-import com.acmerobotics.roadrunner.Pose2d;
-import com.acmerobotics.roadrunner.PoseVelocity2d;
-import com.acmerobotics.roadrunner.Vector2d;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 
 import org.firstinspires.ftc.teamcode.pedroPathing.follower.Follower;
 import org.firstinspires.ftc.teamcode.pedroPathing.localization.Pose;
+import org.firstinspires.ftc.teamcode.pedroPathing.tuning.FollowerConstants;
+import org.firstinspires.ftc.teamcode.sections.Camera;
 import org.firstinspires.ftc.teamcode.sections.Intake;
 import org.firstinspires.ftc.teamcode.sections.Lifters;
 import org.firstinspires.ftc.teamcode.roadrunner.MecanumDrive;
@@ -23,23 +22,25 @@ import java.util.List;
 public class TeleOpPlus extends LinearOpMode {
     private FtcDashboard dash = FtcDashboard.getInstance();
     private List<Action> runningActions = new ArrayList<>();
-    private List<Action> runningActionsLift = new ArrayList<>();
+    private List<Action> AutoGrabAction = new ArrayList<>();
+    private List<Action> ArmAction = new ArrayList<>();
     boolean driverOveride = false;
     boolean clickedX = false;
     MecanumDrive drive;
     Lifters lift;
     Intake intk;
     Follower follower;
+    Camera cam;
     double xMov, yMov = 0;
 
     @Override
     public void runOpMode(){
-//        drive = new MecanumDrive(hardwareMap, new Pose2d(0, 0, 0));
         lift = new Lifters(hardwareMap);
         intk = new Intake(hardwareMap);
-
+        cam = new Camera(hardwareMap,true);
         follower = new Follower(hardwareMap);
         follower.setStartingPose(new Pose(0,0,0));
+
 
         follower.resetIMU();
 
@@ -47,11 +48,11 @@ public class TeleOpPlus extends LinearOpMode {
 //        drive.pauseCamera();
         waitForStart();
         follower.startTeleopDrive();
-        intk.setArmPos(0);
-        intk.setTrunkWall();
+        intk.setElbowPos(0);
         intk.setTwistPos(90);
-        lift.setHorLifterPos(120);
+        lift.setHorLifterPos(0);
 
+        ArmAction.add(intk.SetTrunkWall());
 //        drive.readPos();
         while(opModeIsActive()){
             looping();
@@ -74,6 +75,29 @@ public class TeleOpPlus extends LinearOpMode {
         }
         runningActions = newActions;
 
+        List<Action> newAutoGrab = new ArrayList<>();
+        for (Action action : AutoGrabAction) {
+            action.preview(packet.fieldOverlay());
+            if (action.run(packet)) {
+                newAutoGrab.add(action);
+            }
+        }
+        AutoGrabAction = newActions;
+
+        List<Action> newArmAction = new ArrayList<>();
+        for (Action action : ArmAction) {
+            action.preview(packet.fieldOverlay());
+            if (action.run(packet)) {
+                newArmAction.add(action);
+            }
+        }
+        ArmAction = newArmAction;
+
+        //auto grab code
+
+        if(gamepad1.y&&AutoGrabAction.size()==0){
+            runningActions.add(follower.AutoGrab(cam,intk,lift,true));
+        }
 
         if(!driverOveride) {
             if (gamepad1.dpad_up) {
@@ -92,28 +116,25 @@ public class TeleOpPlus extends LinearOpMode {
         }
 
         double brakeCoeff = 1-gamepad1.right_trigger;
-        follower.setTeleOpMovementVectors((gamepad1.left_stick_y+yMov)*brakeCoeff, (gamepad1.left_stick_x+xMov)*brakeCoeff, -gamepad1.right_stick_x, true);
+        follower.setTeleOpMovementVectors((-gamepad1.left_stick_y+yMov)*brakeCoeff, (-gamepad1.left_stick_x+xMov)*brakeCoeff, -gamepad1.right_stick_x, true);
         follower.update();
 
         //gamepad 2
         if(gamepad2.a){  //intake in
-            intk.intakeIn();
+            intk.setClawPos(0);
         } else if(gamepad2.b) {  //intake out
-            intk.intakeOut();
-        }else intk.intakeOff();  //turn off when not touching those two buttons
-
-        if(gamepad2.dpad_down){
-            intk.setTrunkWall();
-        }else if(gamepad2.dpad_up){
-            intk.setTrunkPit();
+            intk.setClawPos(65);
+        }
+        if(gamepad2.y){
+            intk.setTwistMatchObjAngle(cam,!cam.getSurrounded());
+        }
+        //turn off when not touching those two buttons
+        if(gamepad2.dpad_up&&ArmAction.size()==0){
+            ArmAction.add(intk.SetTrunkPit());
+        }else if(gamepad2.dpad_down&&ArmAction.size()==0){
+            ArmAction.add(intk.SetTrunkWall());
         }
 
-        if(gamepad2.dpad_left) {  //go down to specimen wall
-            runningActions.add(lift.setVertLifterPos(700, .5));
-        }
-        else if(gamepad2.dpad_right){ //go up to pole
-            runningActions.add(lift.setVertLifterPos(2520, .5));
-        }
         else{  //lift using triggers
             if(Math.abs(-gamepad2.right_trigger+gamepad2.left_trigger)>0.01){
                 lift.vertLifterR.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
@@ -125,7 +146,7 @@ public class TeleOpPlus extends LinearOpMode {
         }
 
         intk.setTwistPower(gamepad2.left_stick_x); //twist using left joystick
-        intk.setArmPower(-gamepad2.right_stick_y);
+        intk.setElbowPower(-gamepad2.right_stick_y);
         if(gamepad2.left_bumper){  //left bumper = extendo forward
             lift.setHorLifterPower(1);
         } else if(gamepad2.right_bumper) { //right bumper = extendo backward
@@ -144,6 +165,13 @@ public class TeleOpPlus extends LinearOpMode {
         telemetry.addData("extendoL Pos: ", lift.horLifterL.getPosition());
         telemetry.addData("extendoR Pos: ", lift.horLifterR.getPosition());
         telemetry.addData("arm: ", intk.arm.getPosition());
+        telemetry.addData("x", cam.getObjX());
+        telemetry.addData("y", cam.getObjY());
+        telemetry.addData("angle", cam.getObjRot());
+        telemetry.addData("max X", FollowerConstants.xMovement);
+        telemetry.addData("focus",cam.cam.getFocusControl().getMinFocusLength());
+        telemetry.addData("trigger",gamepad1.right_trigger);
+
         telemetry.update();
 
     }

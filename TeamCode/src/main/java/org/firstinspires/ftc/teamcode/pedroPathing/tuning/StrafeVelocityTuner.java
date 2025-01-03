@@ -126,7 +126,8 @@ public class StrafeVelocityTuner extends OpMode {
             }
             requestOpModeStop();
         }
-
+        telemetryA.addData("y",poseUpdater.getPose().getY());
+        telemetryA.update();
         poseUpdater.update();
         if (!end) {
             if (Math.abs(poseUpdater.getPose().getY()) > DISTANCE) {

@@ -25,15 +25,15 @@ import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.Action;
-import com.acmerobotics.roadrunner.Pose2d;
-import com.acmerobotics.roadrunner.PoseVelocity2d;
+import com.acmerobotics.roadrunner.InstantAction;
+import com.acmerobotics.roadrunner.ParallelAction;
+import com.acmerobotics.roadrunner.SequentialAction;
 import com.acmerobotics.roadrunner.SleepAction;
-import com.acmerobotics.roadrunner.TranslationalVelConstraint;
-import com.acmerobotics.roadrunner.Vector2d;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
+import com.qualcomm.robotcore.hardware.VoltageSensor;
 import com.qualcomm.robotcore.hardware.configuration.typecontainers.MotorConfigurationType;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
@@ -55,9 +55,9 @@ import org.firstinspires.ftc.teamcode.pedroPathing.util.Drawing;
 import org.firstinspires.ftc.teamcode.pedroPathing.util.FilteredPIDFController;
 import org.firstinspires.ftc.teamcode.pedroPathing.util.KalmanFilter;
 import org.firstinspires.ftc.teamcode.pedroPathing.util.PIDFController;
-import org.firstinspires.ftc.teamcode.roadrunner.MecanumDrive;
 import org.firstinspires.ftc.teamcode.sections.Camera;
-import org.firstinspires.ftc.teamcode.sections.Camera.Params;
+import org.firstinspires.ftc.teamcode.sections.Intake;
+import org.firstinspires.ftc.teamcode.sections.Lifters;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -107,7 +107,7 @@ public class Follower {
     private boolean holdPositionAtEnd;
     private boolean teleopDrive;
 
-    private double maxPower = 1;
+    private double maxPower = .95;
     private double previousSecondaryTranslationalIntegral;
     private double previousTranslationalIntegral;
     private double holdPointTranslationalScaling = FollowerConstants.holdPointTranslationalScaling;
@@ -198,6 +198,11 @@ public class Follower {
         for (DcMotorEx motor : motors) {
             motor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
         }
+
+        VoltageSensor voltageSensor = hardwareMap.voltageSensor.iterator().next();
+
+        FollowerConstants.xMovement = (FollowerConstants.xMaxMovement/FollowerConstants.xVolts) * voltageSensor.getVoltage();
+        FollowerConstants.yMovement = (FollowerConstants.yMaxMovement/FollowerConstants.yVolts) * voltageSensor.getVoltage();
 
         dashboardPoseTracker = new DashboardPoseTracker(poseUpdater);
 
@@ -593,6 +598,27 @@ public class Follower {
                 motors.get(i).setPower(drivePowers[i]);
             }
         }
+    }
+
+    public Action Update(MultipleTelemetry tele){
+        return new Action(){
+            boolean start = true;
+            @Override
+            public boolean run(@NonNull TelemetryPacket packet) {
+                if(start == true){
+                    Looping = true;
+                    start = false;
+                    update();
+                    return true;
+                }
+                if(Looping == true) {
+                    update();
+                    telemetryDebug(tele);
+                    return true;
+                }
+                return false;
+            }
+        };
     }
 
     public Action Update(){
@@ -1163,145 +1189,175 @@ public class Follower {
         return new Action() {
             @Override
             public boolean run(@NonNull TelemetryPacket packet) {
-                return (pos.roughlyEquals(getPose()));
+                return (!pos.roughlyEquals(getPose(),.75));
             }
         };
     }
-
-    public Action AutoGrabLoop(Camera cam){
+    Pose start;
+    public Action PostAutoMove() {
         return new Action() {
-            double x,y,rotation,targetYaw;
             ElapsedTime time = new ElapsedTime();
+            Boolean wait = false;
             @Override
-            public boolean run (@NonNull TelemetryPacket packet){
-                if(time.time()<5&&(x==-1 && y==-1)){
-                    x = cam.getObjX();
-                    y = cam.getObjY();
-                    rotation = cam.getObjRot();
-                    targetYaw = poseUpdater.getPose().getHeading();
-                    breakFollowing();
-                    startTeleopDrive();
-                    return true;
-
-                }else if((x==-1 && y==-1)){
-                    //if no obj detected
-                    return false;
-                }else if((cam.getTargetX()-x)/cam.getTargetX()>.025||(cam.getObjY()-y)/cam.getObjY()>.025){
-                    x = cam.getObjX();
-                    y = cam.getObjY();
-                    double xChange = Math.min(Math.max(.05*(cam.getObjX()-x),-.5),.5);
-                    double yChange = Math.min(Math.max(.05*(cam.getObjY()-y),-.5),.5);
-                    double headingChange = cam.angleCor(1*(targetYaw - poseUpdater.getPose().getHeading()));
-
-                    setTeleOpMovementVectors(yChange,xChange,headingChange);
-
-                    packet.put("obj x", x);
-                    packet.put("obj y", y);
-                    return true;
+            public boolean run(@NonNull TelemetryPacket packet) {
+                if(!wait){
+                    time.reset();
+                    followPath(
+                            pathBuilder()
+                                    .addPath(
+                                            new BezierLine(
+                                                    new Point(getPose()),
+                                                    new Point(start)
+                                            )
+                                    )
+                                    .setConstantHeadingInterpolation(start.getHeading())
+                                    .build()
+                            ,true);
+                    wait = true;
                 }
-                stopTeleopDrive();
-                return false;
+
+                if(start.roughlyEquals(getPose(),.2)||time.time()>2.5)
+                    return false;
+                return true;
             }
         };
     }
-    public Action AutoGrabWallLoop(Camera cam, double xTar){
+    public Action AutoMove(Camera cam) {
         return new Action() {
-            double x,y,rotation,targetYaw;
-            ElapsedTime time = new ElapsedTime();
-            @Override
-            public boolean run (@NonNull TelemetryPacket packet){
-                x = cam.getObjX();
-                if(time.time()<5&&(x==-1)){
-                    x = cam.getObjX();
-                    rotation = cam.getObjRot();
-                    targetYaw = poseUpdater.getPose().getHeading();
-                    packet.put("obj x", x);
-                    packet.put("obj y", y);
-                    packet.put("overide", teleopDrive);
-
-                    breakFollowing();
-                    return true;
-
-                }else if((x==-1)){
-                    //if no obj detected
-                    stopTeleopDrive();
-                    return false;
-                }else if(((cam.getTargetX()-x)/cam.getTargetX()>.025||Math.abs(xTar-getPose().getX())>.8)&&x!=-1){
-                    teleopDrive = true;
-                    x = cam.getObjX();
-                    double xChange = Math.min(Math.max(.05*(cam.getTargetX()-cam.getObjX()),-.3),.3);
-                    double yChange = Math.min(Math.max(.05*(xTar-getPose().getX()),-.5),.5);
-                    double headingChange = cam.angleCor(1*(targetYaw - poseUpdater.getPose().getHeading()));
-
-                    setTeleOpMovementVectors(yChange,xChange,headingChange);
-
-                    packet.put("obj x", x);
-                    packet.put("obj y", y);
-                    packet.put("overide", teleopDrive);
-                    return true;
-                }
-                stopTeleopDrive();
-                return false;
-            }
-        };
-    }
-
-    public Action AutoGrabWallLoopTraj(Camera cam, double xTar){
-        return new Action() {
-            double x,y,rotation,targetYaw;
-            ElapsedTime time = new ElapsedTime();
-            Pose start;
+            double rotation, targetYaw, cam2inch;
+            double x;
+            double y;
             Pose endPoint;
-            double cam2inch;
+            boolean driving = false;
+            boolean wait = false;
+            ElapsedTime time = new ElapsedTime();
+
             @Override
-            public boolean run (@NonNull TelemetryPacket packet){
+            public boolean run(@NonNull TelemetryPacket packet) {
                 x = cam.getObjX();
-                if(time.time()<5&&(x==-1)){
-                    x = cam.getObjX();
-                    rotation = cam.getObjRot();
-                    targetYaw = poseUpdater.getPose().getHeading();
+                y = cam.getObjY();
+                rotation = cam.getObjRot();
+                if ((time.time() < 5 && (x == -1 && y == -1) || !wait) && !driving) {
+                    cam.resetTarget();
+                    start = getPose();
+                    breakFollowing();
                     packet.put("obj x", x);
                     packet.put("obj y", y);
-                    packet.put("overide", teleopDrive);
-
-                    start = new Pose(getPose().getX(),getPose().getY(),getPose().getHeading());
-
-                    breakFollowing();
+                    packet.put("w1", cam.getWidth());
+                    packet.put("w2", cam.getHeight());
+                    wait = true;
                     return true;
 
-                }else if((x==-1)){
+                } else if ((x == -1 && y == -1) && !driving) {
                     //if no obj detected
-                    stopTeleopDrive();
                     return false;
-                }else if(endPoint.rotate(getPose().getHeading()).roughlyEquals(getPose())&&x!=-1){
-                    x = cam.getObjX();
-                    cam2inch = 1.5 / Math.min(cam.getTargetObj().size.height, cam.getTargetObj().size.width);
+                } else if (!driving) {
+                    time.reset();
+                    start = getPose();
+                    cam2inch = cam.getCam2Inch();
 
-                    double xChange = (cam.getTargetX()-cam.getObjX())*cam2inch;
+                    double xChange = (cam.getTargetX() - cam.getObjX()) * cam2inch;
+                    double yChange = (cam.getTargetY() - cam.getObjY()) * cam2inch;
 
-                    endPoint = new Pose(xTar,xChange,0);
+                    endPoint = MathFunctions.rotatePose(new Pose(yChange + 2, xChange, 0), start.getHeading(), true);
+                    endPoint.add(start);
+                    followPath(
+                            pathBuilder().addPath(
+                                            new BezierLine(
+                                                    new Point(start),
+                                                    new Point(endPoint)
+                                            )
+                                    )
+                                    .setConstantHeadingInterpolation(start.getHeading())
+                                    .build()
+                            , true);
+                    driving = true;
+                    return true;
+                } else if (endPoint.roughlyEquals(getPose(), .2) || time.time() > 2.5) {
+                    return false;
 
-                    followPath(pathBuilder().addPath(
-                            // Line 1
-                            new BezierLine(
-                                    new Point(start),
-                                    new Point(endPoint.rotate(start.getHeading()))
-                            )
-                            )
-                            .setConstantHeadingInterpolation(start.getHeading())
-                            .build()
-                    );
-
+                } else {
                     packet.put("obj x", x);
                     packet.put("obj y", y);
-                    packet.put("overide", teleopDrive);
+                    packet.put("time", time.time());
                     return true;
                 }
-                stopTeleopDrive();
+            }
+        };
+    }
+    public Action WaitForDetect(Camera cam){
+        return new Action() {
+            double rotation,targetYaw,cam2inch;
+            double x;
+            double y;
+            Pose endPoint;
+            boolean driving = false;
+            boolean wait = false;
+            ElapsedTime time = new ElapsedTime();
+            @Override
+            public boolean run (@NonNull TelemetryPacket packet) {
+                x = cam.getObjX();
+                y = cam.getObjY();
+                rotation = cam.getObjRot();
+                if ((time.time() < 5 && (x == -1 && y == -1) || !wait) && !driving) {
+                    cam.resetTarget();
+                    start = getPose();
+                    breakFollowing();
+                    packet.put("obj x", x);
+                    packet.put("obj y", y);
+                    packet.put("w1", cam.getWidth());
+                    packet.put("w2", cam.getHeight());
+                    wait = true;
+                    return true;
+
+                }
+                cam.setSelected();
                 return false;
             }
         };
     }
+
+    public Action AutoGrab(Camera cam, Intake intk, Lifters lift){
+        return AutoGrab(cam, intk, lift, false);
+    }
+
+    public Action AutoGrab(Camera cam, Intake intk, Lifters lift, Boolean teleOp){
+        Action tele = new SleepAction(0);
+        if(teleOp){
+            tele = new InstantAction(()->this.teleopDrive=true);
+        }
+        return new SequentialAction(
+                lift.setVertLifterPos(700,1),
+                new SleepAction(.2),
+                intk.SetElbowPos(15),
+                WaitForDetect(cam),
+                intk.SetClawAutoOpen(cam),
+                intk.SetTwistMatchObjAngle(cam),
+                new ParallelAction(
+                        AutoMove(cam),
+                        lift.setVertLifterPos(250,1)
+                ),
+                lift.setVertLifterPos(50,1),
+                intk.SetClawAutoClose(cam),
+                new SleepAction(.25),
+                intk.SetElbowPos(90),
+//                PostAutoMove(),
+                lift.setVertLifterPos(0,1),
+                tele
+        );
+    }
+    public Action goToPose(Pose pos){
+        return FollowPath(pathBuilder()
+                .addPath(
+                        new BezierLine(
+                                new Point(getPose()),
+                                new Point(pos)
+                        )
+                )
+                .setLinearHeadingInterpolation(getPose().getHeading(), pos.getHeading())
+                .build());
+    }
+
 
 //    public Action waitForPose(double x, double y, double yaw) {
 //        return new Action() {
