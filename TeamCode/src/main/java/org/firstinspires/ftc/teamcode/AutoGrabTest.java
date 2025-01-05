@@ -83,17 +83,15 @@ public final class AutoGrabTest extends LinearOpMode {
                 follower.Update(),
                 //main sequential
                 new SequentialAction(
-                        follower.goToPose(new Pose(48,0,0)),
-                        follower.waitForPose(grab1),
-                        follower.goToPose(new Pose(0,0,0)),
-                        follower.waitForPose(new Pose(0,0,0)),
-                        intk.SetTrunkPit(),
-                        lift.SetHorLifterPos(90),
-                        new SleepAction(1),
-                        follower.AutoGrab(cam,intk,lift),
-                        follower.goToPose(new Pose(0,0,0)),
-                        intk.SetTrunkWall(),
-                        follower.waitForPose(new Pose(0,0,0)),
+                        follower.WaitForDetect(cam),
+                        follower.AutoMoveLoop(cam),
+//                        intk.SetTrunkPit(),
+//                        lift.SetHorLifterPos(90),
+//                        new SleepAction(1),
+//                        follower.AutoGrab(cam,intk,lift),
+//                        follower.goToPose(new Pose(0,0,0)),
+//                        intk.SetTrunkWall(),
+//                        follower.waitForPose(new Pose(0,0,0)),
                         follower.StopUpdate()
 
                 )

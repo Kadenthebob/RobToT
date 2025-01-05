@@ -4,6 +4,7 @@ import com.acmerobotics.dashboard.config.Config;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
+import org.firstinspires.ftc.robotcore.external.hardware.camera.controls.ExposureControl;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.controls.FocusControl;
 import org.opencv.core.Core;
 import org.opencv.core.Mat;
@@ -23,6 +24,7 @@ import org.openftc.easyopencv.OpenCvWebcam;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 public class Camera {
     public OpenCvWebcam cam;
@@ -44,6 +46,8 @@ public class Camera {
         public static double SURROUNDED_DISTANCE = 3;//in inches
 
         public static double FOCUS_LENGTH = 0;
+
+        public static double CAM_EXPOSURE = 130;
 
     }
     @Config
@@ -157,6 +161,8 @@ public class Camera {
                 cam.startStreaming(PARAMS.CAM_WIDTH, PARAMS.CAM_HEIGHT, OpenCvCameraRotation.UPSIDE_DOWN);
                 cam.getFocusControl().setMode(FocusControl.Mode.Fixed);
                 cam.getFocusControl().setFocusLength(CamParams.FOCUS_LENGTH);
+//                cam.getExposureControl().setMode(ExposureControl.Mode.Manual);
+                cam.getExposureControl().setExposure((long)CamParams.CAM_EXPOSURE, TimeUnit.MILLISECONDS);
 
                 cam.setPipeline(pipeline);
 

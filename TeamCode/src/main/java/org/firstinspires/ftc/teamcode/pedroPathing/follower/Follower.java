@@ -1189,7 +1189,7 @@ public class Follower {
         return new Action() {
             @Override
             public boolean run(@NonNull TelemetryPacket packet) {
-                return (!pos.roughlyEquals(getPose(),.75));
+                return (!pos.roughlyEquals(getPose(),.5));
             }
         };
     }
@@ -1229,6 +1229,7 @@ public class Follower {
             double y;
             Pose endPoint;
             boolean driving = false;
+            boolean looping = false;
             boolean wait = false;
             ElapsedTime time = new ElapsedTime();
 
@@ -1273,7 +1274,7 @@ public class Follower {
                             , true);
                     driving = true;
                     return true;
-                } else if (endPoint.roughlyEquals(getPose(), .2) || time.time() > 2.5) {
+                } else if (endPoint.roughlyEquals(getPose(), .7) || time.time() > 2.5) {
                     return false;
 
                 } else {
@@ -1282,6 +1283,78 @@ public class Follower {
                     packet.put("time", time.time());
                     return true;
                 }
+            }
+        };
+    }
+
+    public Action AutoMoveLoop(Camera cam) {
+        return new Action() {
+            double rotation, targetYaw, cam2inch;
+            double x;
+            double y;
+            double tarHeading;
+            Pose endPoint;
+            boolean driving = false;
+            boolean looping = false;
+            boolean wait = false;
+            ElapsedTime time = new ElapsedTime();
+
+            @Override
+            public boolean run(@NonNull TelemetryPacket packet) {
+                x = cam.getObjX();
+                y = cam.getObjY();
+                rotation = cam.getObjRot();
+
+                if ((time.time() < 5 && (x == -1 && y == -1) || !wait) && !driving) {
+                    cam.resetTarget();
+                    start = getPose();
+                    breakFollowing();
+                    packet.put("obj x", x);
+                    packet.put("obj y", y);
+                    packet.put("w1", cam.getWidth());
+                    packet.put("w2", cam.getHeight());
+                    tarHeading = getPose().getHeading();
+                    wait = true;
+                    return true;
+
+                } else if ((x == -1 && y == -1) && !looping) {
+                    //if no obj detected
+                    return false;
+                } else if ((Math.abs(cam.getTargetX() - cam.getObjX())>15&&Math.abs(cam.getTargetY() - cam.getObjY())>15)&&!driving) {
+                    looping = true;
+                    teleopDrive = true;
+                    double xChange = Math.min(Math.max(.05 * (cam.getTargetX() - cam.getObjX()), -.5), .5);
+                    double yChange = Math.min(Math.max(.05 * (cam.getTargetY() - cam.getObjY()), -.5), .5);
+                    double headingChange = cam.angleCor(1 * (targetYaw - poseUpdater.getPose().getHeading()));
+
+                    setTeleOpMovementVectors(yChange, xChange, headingChange);
+
+                    time.reset();
+
+                    cam2inch = cam.getCam2Inch();
+
+                    setTeleOpMovementVectors(yChange, xChange, headingChange);
+                    return true;
+                } else if(!driving&&looping){
+                    start = getPose();
+                    endPoint = MathFunctions.rotatePose(new Pose(2, 0, 0), start.getHeading(), true);
+                    endPoint.add(start);
+                    teleopDrive = false;
+                    followPath(
+                            pathBuilder().addPath(
+                                            new BezierLine(
+                                                    new Point(start),
+                                                    new Point(endPoint)
+                                            )
+                                    )
+                                    .setConstantHeadingInterpolation(start.getHeading())
+                                    .build()
+                            , true);
+                    driving = true;
+                } else if(endPoint.roughlyEquals(getPose(), .7)){
+                    return false;
+                }
+                return true;
             }
         };
     }
