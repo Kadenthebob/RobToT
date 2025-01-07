@@ -189,6 +189,17 @@ public class Intake {
         trunkL.setPosition(pos+(trunkOffset/PARAMS.trunkServoMaxTurn));
     }
 
+    public void setTrunkHoop(){
+        double degree = 60;
+        double pos = Math.max(Math.min(degree,PARAMS.trunkMaxDegree),0); //sets a limit to what you can set the servo position to go to
+
+        pos/=PARAMS.trunkServoMaxTurn; //converts from degrees(0-360) to servo position(0-1)
+
+        trunkR.setPosition(pos+(trunkOffset/PARAMS.trunkServoMaxTurn));
+        trunkL.setPosition(pos+(trunkOffset/PARAMS.trunkServoMaxTurn));
+    }
+
+
     public void setTrunkPos(double degree){
         double pos = Math.max(Math.min(degree,PARAMS.trunkMaxDegree),0); //sets a limit to what you can set the servo position to go to
 
@@ -244,6 +255,32 @@ public class Intake {
                 SetElbowPos(300),
                 new SleepAction(.8),
                 SetTwistPos(0)
+        );
+    }
+
+    public Action SetTrunkHoop(){
+        return new SequentialAction(
+                SetTwistPos(90),
+                SetElbowPos(100),
+                SetTrunkPos(60),
+                new SleepAction(.5),
+                SetElbowPos(300),
+                new SleepAction(.8),
+                SetTwistPos(0)
+        );
+    }
+
+    public Action SetSpec1(){
+        return new SequentialAction(
+                SetTwistPos(0),
+                SetElbowPos(100),
+                SetTrunkPos(150)
+        );
+    }
+
+    public Action SetSpec2(){
+        return new SequentialAction(
+                SetTrunkPos(100)
         );
     }
 

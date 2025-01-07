@@ -52,7 +52,7 @@ public class TeleOpPlus extends LinearOpMode {
         intk.setTwistPos(90);
         lift.setHorLifterPos(0);
 
-        ArmAction.add(intk.SetTrunkWall());
+        ArmAction.add(intk.SetTrunkHoop());
 //        drive.readPos();
         while(opModeIsActive()){
             looping();
@@ -128,14 +128,20 @@ public class TeleOpPlus extends LinearOpMode {
         if(gamepad2.y){
             intk.setTwistMatchObjAngle(cam,!cam.getSurrounded());
         }
-        //turn off when not touching those two buttons
-        if(gamepad2.dpad_up&&ArmAction.size()==0){
-            ArmAction.add(intk.SetTrunkPit());
-        }else if(gamepad2.dpad_down&&ArmAction.size()==0){
-            ArmAction.add(intk.SetTrunkWall());
-        }
 
-        else{  //lift using triggers
+
+        //turn off when not touching those two buttons
+        if (gamepad2.dpad_left&&ArmAction.size()==0){
+            ArmAction.add(intk.SetTrunkHoop());
+        }
+        else if(gamepad2.dpad_up&&ArmAction.size()==0){
+            ArmAction.add(intk.SetTrunkPit());
+        }else if(gamepad2.dpad_down&&ArmAction.size()==0) {
+            ArmAction.add(intk.SetTrunkWall());
+        } else if(gamepad2.dpad_right&&ArmAction.size()==0){
+            ArmAction.add(intk.SetSpec1());
+        }
+        else {  //lift using triggers
             if(Math.abs(-gamepad2.right_trigger+gamepad2.left_trigger)>0.01){
                 lift.vertLifterR.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
                 lift.vertLifterL.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);

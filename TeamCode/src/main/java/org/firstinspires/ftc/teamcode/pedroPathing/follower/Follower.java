@@ -1298,6 +1298,7 @@ public class Follower {
             boolean looping = false;
             boolean wait = false;
             ElapsedTime time = new ElapsedTime();
+            ElapsedTime pathTimeout = new ElapsedTime();  // Added timeout for path following
 
             @Override
             public boolean run(@NonNull TelemetryPacket packet) {
@@ -1305,7 +1306,8 @@ public class Follower {
                 y = cam.getObjY();
                 rotation = cam.getObjRot();
 
-                if ((time.time() < 5 && (x == -1 && y == -1) || !wait) && !driving) {
+                // Fixed parentheses for correct logic evaluation
+                if (time.time() < 5 && ((x == -1 && y == -1) || !wait) && !driving) {
                     cam.resetTarget();
                     start = getPose();
                     breakFollowing();
@@ -1320,26 +1322,32 @@ public class Follower {
                 } else if ((x == -1 && y == -1) && !looping) {
                     //if no obj detected
                     return false;
-                } else if ((Math.abs(cam.getTargetX() - cam.getObjX())>15&&Math.abs(cam.getTargetY() - cam.getObjY())>15)&&!driving) {
+
+                    // Changed to OR condition for vision alignment
+                } else if ((Math.abs(cam.getTargetX() - cam.getObjX()) > 15 ||
+                        Math.abs(cam.getTargetY() - cam.getObjY()) > 15) && !driving) {
                     looping = true;
                     teleopDrive = true;
+
+                    // Calculate movement vectors
                     double xChange = Math.min(Math.max(.05 * (cam.getTargetX() - cam.getObjX()), -.5), .5);
                     double yChange = Math.min(Math.max(.05 * (cam.getTargetY() - cam.getObjY()), -.5), .5);
                     double headingChange = cam.angleCor(1 * (targetYaw - poseUpdater.getPose().getHeading()));
 
+                    // Single call to setTeleOpMovementVectors
                     setTeleOpMovementVectors(yChange, xChange, headingChange);
 
                     time.reset();
-
-                    cam2inch = cam.getCam2Inch();
-
-                    setTeleOpMovementVectors(yChange, xChange, headingChange);
                     return true;
-                } else if(!driving&&looping){
+
+                } else if(!driving && looping) {
+                    // Set teleopDrive before path construction
+                    teleopDrive = false;
+
                     start = getPose();
                     endPoint = MathFunctions.rotatePose(new Pose(2, 0, 0), start.getHeading(), true);
                     endPoint.add(start);
-                    teleopDrive = false;
+
                     followPath(
                             pathBuilder().addPath(
                                             new BezierLine(
@@ -1350,14 +1358,20 @@ public class Follower {
                                     .setConstantHeadingInterpolation(start.getHeading())
                                     .build()
                             , true);
+
                     driving = true;
-                } else if(endPoint.roughlyEquals(getPose(), .7)){
+                    pathTimeout.reset();  // Start timeout timer
+                    return true;
+
+                    // Added timeout condition (10 seconds) for path following
+                } else if(endPoint.roughlyEquals(getPose(), .7) || pathTimeout.time() > 10) {
                     return false;
                 }
                 return true;
             }
         };
     }
+
     public Action WaitForDetect(Camera cam){
         return new Action() {
             double rotation,targetYaw,cam2inch;
