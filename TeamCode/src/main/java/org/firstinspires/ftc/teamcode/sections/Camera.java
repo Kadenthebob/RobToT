@@ -6,6 +6,7 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.controls.ExposureControl;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.controls.FocusControl;
+import org.opencv.calib3d.Calib3d;
 import org.opencv.core.Core;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfPoint;
@@ -35,8 +36,8 @@ public class Camera {
         public static boolean TRACK_YELLOW = true;
         public static boolean TRACK_TARGET_COLOR = true;
 
-        public static int OBJ_TARGET_X = 226;
-        public static int OBJ_TARGET_Y = 337;
+        public static int OBJ_TARGET_X = 193;
+        public static int OBJ_TARGET_Y = 193;
         public static int OBJ_MIN_SIZE = 1500;
 
         public static int CAM_HEIGHT = 360;
@@ -46,16 +47,23 @@ public class Camera {
         public static double SURROUNDED_DISTANCE = 3;//in inches
 
         public static double FOCUS_LENGTH = 0;
+        public static double CAM_EXPOSURE = 80000;
+        public static int CAM_GAIN = 250;
 
-        public static double CAM_EXPOSURE = 130;
+        public static boolean useHomography = false;
+        public static boolean doWarp = true;
 
+    }
+    @Config
+    public static class WarpGain {
+        public static double WARP_GAIN = .2;
     }
     @Config
     public static class WarpParam {
         // Source points (as fractions of image width/height)
-        public static double SRC_TL_X = 0.3;   // Moved closer to edge
+        public static double SRC_TL_X = 0;   // Moved closer to edge
         public static double SRC_TL_Y = 0.0;
-        public static double SRC_TR_X = 0.7;   // Moved closer to edge
+        public static double SRC_TR_X = 1;   // Moved closer to edge
         public static double SRC_TR_Y = 0.0;
         public static double SRC_BL_X = 0.0;
         public static double SRC_BL_Y = 1.0;
@@ -63,20 +71,20 @@ public class Camera {
         public static double SRC_BR_Y = 1.0;
 
         // Wider destination points
-        public static double DST_TL_X = 0.3;   // Wider output
+        public static double DST_TL_X = 0;   // Wider output
         public static double DST_TL_Y = 0.0;
-        public static double DST_TR_X = 0.7;   // Wider output
+        public static double DST_TR_X = 1;   // Wider output
         public static double DST_TR_Y = 0.0;
-        public static double DST_BL_X = 0.3;
+        public static double DST_BL_X = 0;
         public static double DST_BL_Y = 1.0;
-        public static double DST_BR_X = 0.7;
+        public static double DST_BR_X = 1;
         public static double DST_BR_Y = 1.0;  // Bottom-right Y
     }
     @Config
     public static class CamYellowDetect {
         public static int L_H = 15;
-        public static int L_S = 25;
-        public static int L_V = 230;
+        public static int L_S = 40;
+        public static int L_V = 150;
 
         public static int U_H = 35;
         public static int U_S = 255;
@@ -92,8 +100,8 @@ public class Camera {
     @Config
     public static class CamBlueDetect {
         public static int L_H = 100;
-        public static int L_S = 100;
-        public static int L_V = 150;
+        public static int L_S = 80;
+        public static int L_V = 80;
 
         public static int U_H = 130;
         public static int U_S = 255;
@@ -107,6 +115,23 @@ public class Camera {
     }
 
     @Config
+    public static class CamTopBlueDetect {
+        public static int L_H = 100;
+        public static int L_S = 80;
+        public static int L_V = 150;
+
+        public static int U_H = 130;
+        public static int U_S = 255;
+        public static int U_V = 255;
+
+        public static Mat getMask(Mat hierarchy){
+            Mat topMaskBlue = new Mat();
+            Core.inRange(hierarchy, new Scalar(L_H, L_S, L_V), new Scalar(U_H, U_S, U_V), topMaskBlue);
+            return topMaskBlue;
+        }
+    }
+
+    @Config
     public static class CamRedDetect {
         public static int FL_H = 172;
         public static int FU_H = 179;
@@ -115,7 +140,7 @@ public class Camera {
         public static int SU_H = 8;
 
         public static int L_S = 100;
-        public static int L_V = 210;
+        public static int L_V = 100;
 
 
         public static int U_S = 255;
@@ -137,6 +162,7 @@ public class Camera {
     CamYellowDetect yellowDetect = new CamYellowDetect();
     CamRedDetect redDetect = new CamRedDetect();
     CamBlueDetect blueDetect = new CamBlueDetect();
+    CamTopBlueDetect topBlueDetect = new CamTopBlueDetect();
 
 
     public CameraDetectPipeline getPipeline(){
@@ -161,8 +187,9 @@ public class Camera {
                 cam.startStreaming(PARAMS.CAM_WIDTH, PARAMS.CAM_HEIGHT, OpenCvCameraRotation.UPSIDE_DOWN);
                 cam.getFocusControl().setMode(FocusControl.Mode.Fixed);
                 cam.getFocusControl().setFocusLength(CamParams.FOCUS_LENGTH);
-//                cam.getExposureControl().setMode(ExposureControl.Mode.Manual);
-                cam.getExposureControl().setExposure((long)CamParams.CAM_EXPOSURE, TimeUnit.MILLISECONDS);
+                cam.getExposureControl().setMode(ExposureControl.Mode.Manual);
+                cam.getExposureControl().setExposure((long)CamParams.CAM_EXPOSURE, TimeUnit.MICROSECONDS);
+                cam.getGainControl().setGain(CamParams.CAM_GAIN);
 
                 cam.setPipeline(pipeline);
 
@@ -178,10 +205,11 @@ public class Camera {
         Mat output = new Mat();
         Mat TotalMask = new Mat();
         Mat hierarchy = new Mat();
+        Mat topMask = new Mat();
         Mat selectedColorMask;
         Mat unselectedColorMask;
         Mat yellowMask;
-        public RotatedRect target;
+        public RotatedRect target, targetTop;
         public RotatedRect selected;
         //inches
         double wlratio = 1.5/3.5;// width/length of object
@@ -195,10 +223,14 @@ public class Camera {
             if(!PARAMS.TRACK_YELLOW&&!PARAMS.TRACK_TARGET_COLOR){
                 return input;
             }
-            input = warpPerspective(input);
+            if (CamParams.doWarp) {
+                input = warpPerspective(input);
+            }
+
 
             Imgproc.cvtColor(input, hierarchy, Imgproc.COLOR_RGB2HSV);
 
+            topMask = topBlueDetect.getMask(hierarchy);
             yellowMask = yellowDetect.getMask(hierarchy);
             if(CamParams.redTeam){
                 selectedColorMask = redDetect.getMask(hierarchy);
@@ -227,6 +259,7 @@ public class Camera {
 //      Insert Code for Rectangle detections here
             List<RotatedRect> rectList = new ArrayList<>();
             List<RotatedRect> rectListUnselec = new ArrayList<>();
+            List<RotatedRect> rectListTop = new ArrayList<>();
             if(PARAMS.TRACK_TARGET_COLOR){
                 rectList = getRect(selectedColorMask, hierarchy,rectList);
             }
@@ -234,12 +267,19 @@ public class Camera {
                 rectList = getRect(yellowMask, hierarchy, rectList);
             }
 
+
+            rectListTop = getRect(topMask,hierarchy,rectListTop);
+            targetTop = getClosest(rectListTop);
+
             rectListUnselec = getRect(unselectedColorMask,hierarchy,rectListUnselec);
 
             output = addRect(output, rectList, new Scalar(0, 255, 0));
             target = getClosest(rectList);
             output = addRect(output,rectListUnselec, new Scalar(255,0,255));
             rectListUnselec.addAll(rectList);
+
+            output = addRect(output,rectListTop, new Scalar(0,255,175));
+            Imgproc.drawMarker(output,new Point(targetAdjX(),targetAdjY()),new Scalar(0,255,175));
             isTargetSurrounded = setTargetSurrounded(rectListUnselec);
             try {
                 Imgproc.drawMarker(output, target.center, new Scalar(255, 0, 0));
@@ -257,7 +297,7 @@ public class Camera {
                     RotatedRect rect = Imgproc.minAreaRect(new MatOfPoint2f(contour.toArray()));
 
                     double rat = Math.min(rect.size.height, rect.size.width)/Math.max(rect.size.height, rect.size.width);
-                    if(Math.abs(rat-wlratio)/wlratio<.4){
+                    if(Math.abs(rat-wlratio)/wlratio<1){
                         minRect.add(rect);
                     }
 
@@ -274,6 +314,7 @@ public class Camera {
                 Point[] rectPoints = new Point[4];
                 minRect.get(i).points(rectPoints);
                 Imgproc.drawMarker(input,new Point(minRect.get(i).center.x,minRect.get(i).center.y),new Scalar(0,255,0));
+                Imgproc.putText(input,Math.floor(minRect.get(i).center.x)+ ", " + Math.floor(minRect.get(i).center.y),new Point(minRect.get(i).center.x,minRect.get(i).center.y),1,1,new Scalar(255,255,0));
                 for (int j = 0; j < 4; j++) {
                     Imgproc.line(input, rectPoints[j], rectPoints[(j+1) % 4], color, 4);
                 }
@@ -314,7 +355,7 @@ public class Camera {
                             temp = rect;
                             tempLength = Math.sqrt(Math.pow(target.center.x - temp.center.x, 2) + Math.pow(target.center.y - temp.center.y, 2));
 
-                            if (tempLength * getCam2Inch() < CamParams.SURROUNDED_DISTANCE) {
+                            if (tempLength * getCam2InchX() < CamParams.SURROUNDED_DISTANCE) {
                                 return true;
                             }
                         }
@@ -379,37 +420,39 @@ public class Camera {
             return 0;
         }
 
-
         Mat warpPerspective(Mat input) {
             int width = input.width();
             int height = input.height();
 
             // Create source points
             Point[] srcPoints = new Point[4];
-            srcPoints[0] = new Point(width * WarpParams.SRC_TL_X, height * WarpParams.SRC_TL_Y);   // Top-left
-            srcPoints[1] = new Point(width * WarpParams.SRC_TR_X, height * WarpParams.SRC_TR_Y);   // Top-right
+            srcPoints[0] = new Point(width * (WarpParams.SRC_TL_X+WarpGain.WARP_GAIN), height * WarpParams.SRC_TL_Y);   // Top-left
+            srcPoints[1] = new Point(width * (WarpParams.SRC_TR_X-WarpGain.WARP_GAIN), height * WarpParams.SRC_TR_Y);   // Top-right
             srcPoints[2] = new Point(width * WarpParams.SRC_BL_X, height * WarpParams.SRC_BL_Y);   // Bottom-left
             srcPoints[3] = new Point(width * WarpParams.SRC_BR_X, height * WarpParams.SRC_BR_Y);   // Bottom-right
 
             // Create destination points
             Point[] dstPoints = new Point[4];
-            dstPoints[0] = new Point(width * WarpParams.DST_TL_X, height * WarpParams.DST_TL_Y);
-            dstPoints[1] = new Point(width * WarpParams.DST_TR_X, height * WarpParams.DST_TR_Y);
-            dstPoints[2] = new Point(width * WarpParams.DST_BL_X, height * WarpParams.DST_BL_Y);
-            dstPoints[3] = new Point(width * WarpParams.DST_BR_X, height * WarpParams.DST_BR_Y);
+            dstPoints[0] = new Point(width * (WarpParams.DST_TL_X+WarpGain.WARP_GAIN), height * WarpParams.DST_TL_Y);
+            dstPoints[1] = new Point(width * (WarpParams.DST_TR_X-WarpGain.WARP_GAIN), height * WarpParams.DST_TR_Y);
+            dstPoints[2] = new Point(width * (WarpParams.DST_BL_X+WarpGain.WARP_GAIN), height * WarpParams.DST_BL_Y);
+            dstPoints[3] = new Point(width * (WarpParams.DST_BR_X-WarpGain.WARP_GAIN), height * WarpParams.DST_BR_Y);
 
             // Convert points to the format needed by OpenCV
             MatOfPoint2f src = new MatOfPoint2f(srcPoints);
             MatOfPoint2f dst = new MatOfPoint2f(dstPoints);
             // Get the transformation matrix
-            Mat perspectiveTransform = Imgproc.getPerspectiveTransform(src, dst);
+
+            Mat perspectiveTransform;
+            if(CamParams.useHomography){
+                perspectiveTransform = Calib3d.findHomography(src, dst);
+            }else perspectiveTransform = Imgproc.getPerspectiveTransform(src, dst);
 
             // Create output matrix and apply the transformation
             Imgproc.warpPerspective(input, input, perspectiveTransform, new Size(width, height));
 
             return input;
         }
-
 
         public double getX() {
             try{
@@ -504,16 +547,65 @@ public class Camera {
     public boolean getSurrounded(){
         return pipeline.isTargetSurrounded;
     }
-    public double getCam2Inch(){ return 1.5 / Math.min(getWidth(), getHeight());}
+    public double getCam2InchY(){
+//        return 1.5 / Math.min(getWidth(), getHeight());
+        return 10.25/CamParams.CAM_HEIGHT; //at 900 height
+    }
+
+    public double getCam2InchX(){
+//        return 1.5 / Math.min(getWidth(), getHeight());
+        return 19/CamParams.CAM_WIDTH; //at 900 height
+    }
 
     public void setSelected(){
         selected.rect = getTargetObj();
         selected.surrounded = getSurrounded();
     }
+
     public RotatedRect getSelectedRect(){
         return selected.rect;
     }
     public boolean getSelectedSurrounded(){
         return selected.surrounded;
+    }
+    public long getExposure(){
+        return cam.getExposureControl().getExposure(TimeUnit.MICROSECONDS);
+    }
+
+    public void adjustExposure(long num){
+        cam.getExposureControl().setExposure(num+getExposure(),TimeUnit.MICROSECONDS);
+    }
+
+    public double getTargetDifX(){
+        try {
+            return pipeline.targetTop.center.x - pipeline.target.center.x;
+        } catch(Exception e){
+            return -1;
+        }
+    }
+    public double getTargetDifY(){
+        try {
+            return pipeline.targetTop.center.y - targetAdjY();
+        } catch(Exception e){
+            return -1;
+        }
+    }
+
+    public double targetAdjY(){
+        try {
+            double y = getObjY();
+            return y+(y*.0594-27.5);
+        } catch(Exception e){
+            return -1;
+        }
+    }
+
+    public double targetAdjX(){
+        try {
+            double x = getObjX();
+            return x;
+        } catch(Exception e){
+            return -1;
+        }
     }
 }

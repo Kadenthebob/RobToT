@@ -139,17 +139,19 @@ public class TeleOpPlus extends LinearOpMode {
         }else if(gamepad2.dpad_down&&ArmAction.size()==0) {
             ArmAction.add(intk.SetTrunkWall());
         } else if(gamepad2.dpad_right&&ArmAction.size()==0){
-            ArmAction.add(intk.SetSpec1());
+            ArmAction.add(intk.SetSpec(lift));
         }
-        else {  //lift using triggers
-            if(Math.abs(-gamepad2.right_trigger+gamepad2.left_trigger)>0.01){
-                lift.vertLifterR.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-                lift.vertLifterL.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-                lift.setVertLifterPower(-gamepad2.right_trigger+gamepad2.left_trigger);
-            }else{
-                lift.lifterOverideOff();
-            }
+
+
+         //lift using triggers
+        if(Math.abs(-gamepad2.right_trigger+gamepad2.left_trigger)>0.01){
+            lift.vertLifterR.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+            lift.vertLifterL.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+            lift.setVertLifterPower(-gamepad2.right_trigger+gamepad2.left_trigger);
+        }else{
+            lift.lifterOverideOff();
         }
+
 
         intk.setTwistPower(gamepad2.left_stick_x); //twist using left joystick
         intk.setElbowPower(-gamepad2.right_stick_y);

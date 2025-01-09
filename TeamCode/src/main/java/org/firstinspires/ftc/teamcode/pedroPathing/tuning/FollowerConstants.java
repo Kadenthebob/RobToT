@@ -218,4 +218,14 @@ public class FollowerConstants {
 
     // Feed forward constant added on to the secondary drive PIDF
     public static double secondaryDrivePIDFFeedForward = 0.01;
+
+    public static CustomPIDFCoefficients AutoMoveDrivePIDFCoefficients = new CustomPIDFCoefficients(
+            0.00125,
+            0.0007,
+            .00005,
+            0);
+
+    public static double autoGrabOffX = 4;
+    public static double autoGrabOffY = 0;
+    public static boolean autoWait = false;
 }

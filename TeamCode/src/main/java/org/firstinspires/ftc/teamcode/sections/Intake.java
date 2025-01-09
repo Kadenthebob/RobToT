@@ -238,7 +238,7 @@ public class Intake {
 
     public Action SetTrunkPit(){
         return new SequentialAction(
-                SetTwistPos(90),
+                SetTwistPos(0),
                 SetElbowPos(100),
                 SetTrunkPos(190),
                 new SleepAction(1),
@@ -248,13 +248,13 @@ public class Intake {
 
     public Action SetTrunkWall(){
         return new SequentialAction(
-                SetTwistPos(90),
+                SetTwistPos(0),
                 SetElbowPos(100),
                 SetTrunkPos(20),
                 new SleepAction(.5),
                 SetElbowPos(300),
                 new SleepAction(.8),
-                SetTwistPos(0)
+                SetTwistPos(90)
         );
     }
 
@@ -266,15 +266,16 @@ public class Intake {
                 new SleepAction(.5),
                 SetElbowPos(300),
                 new SleepAction(.8),
-                SetTwistPos(0)
+                SetTwistPos(90)
         );
     }
 
-    public Action SetSpec1(){
+    public Action SetSpec(Lifters lift){
         return new SequentialAction(
-                SetTwistPos(0),
+                SetTwistPos(90),
                 SetElbowPos(100),
-                SetTrunkPos(150)
+                SetTrunkPos(95),
+                lift.setVertLifterPos(1355,1)
         );
     }
 
@@ -322,7 +323,7 @@ public class Intake {
 
     public void setTwistMatchObjAngle(Camera cam,boolean ninetyOffset){
         double off = 0;
-        if(ninetyOffset) off = 90;
+        if(!ninetyOffset) off = 90;
         setTwistPos((180-(cam.getObjRot()+90)+off)%180);
     }
 

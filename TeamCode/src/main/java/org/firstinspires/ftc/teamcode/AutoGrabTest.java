@@ -75,7 +75,7 @@ public final class AutoGrabTest extends LinearOpMode {
 
         Lifters lift = new Lifters(hardwareMap);
         Intake intk = new Intake(hardwareMap);
-        Camera cam = new Camera(hardwareMap,true);
+        Camera cam = new Camera(hardwareMap,false);
         waitForStart();
         Actions.runBlocking(
            //Follower Class loop
@@ -85,14 +85,15 @@ public final class AutoGrabTest extends LinearOpMode {
                 new SequentialAction(
                         lift.setVertLifterPos(700,1),
                         follower.WaitForDetect(cam),
-                        follower.AutoMoveLoop(cam),
+
 //                        intk.SetTrunkPit(),
 //                        lift.SetHorLifterPos(90),
 //                        new SleepAction(1),
-//                        follower.AutoGrab(cam,intk,lift),
+                        follower.AutoGrab(cam,intk,lift),
 //                        follower.goToPose(new Pose(0,0,0)),
 //                        intk.SetTrunkWall(),
 //                        follower.waitForPose(new Pose(0,0,0)),
+                        new SleepAction(1),
                         follower.StopUpdate()
 
                 )

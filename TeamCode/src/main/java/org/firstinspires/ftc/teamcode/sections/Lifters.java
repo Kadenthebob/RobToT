@@ -10,7 +10,7 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.PwmControl;
 import com.qualcomm.robotcore.hardware.Servo;
-import com.qualcomm.robotcore.hardware.ServoImplEx;
+import com.qualcomm.robotcore.hardware.ServoImplEx;;
 
 public class Lifters {
     public DcMotor vertLifterR, vertLifterL;
@@ -179,19 +179,20 @@ public class Lifters {
         lifterRpower += (lifterAvgPos-rPos)*PARAMS.lifterCorCoef;
         lifterLpower += (lifterAvgPos-lPos)*PARAMS.lifterCorCoef;
 
-
-        if(PARAMS.lifterLimitHigh>lifterAvgPos && pow>=0){
-            vertLifterR.setPower(lifterRpower);
-            vertLifterL.setPower(lifterLpower);
-        }else if(PARAMS.lifterLimitLow<lifterAvgPos && pow<=0) {
-            vertLifterR.setPower(lifterRpower);
-            vertLifterL.setPower(lifterLpower);
-        }else{
-            vertLifterR.setPower(lifterRpower-pow);
-            vertLifterL.setPower(lifterLpower-pow);
+        if(!lifterOveride) {
+            if (PARAMS.lifterLimitHigh > lifterAvgPos && pow >= 0) {
+                vertLifterR.setPower(lifterRpower);
+                vertLifterL.setPower(lifterLpower);
+            } else if (PARAMS.lifterLimitLow < lifterAvgPos && pow <= 0) {
+                vertLifterR.setPower(lifterRpower);
+                vertLifterL.setPower(lifterLpower);
+            } else {
+                vertLifterR.setPower(lifterRpower - pow);
+                vertLifterL.setPower(lifterLpower - pow);
+            }
+            targetPos = (int)lifterAvgPos;
+            lifterOveride = true;
         }
-        targetPos = (int)lifterAvgPos;
-        lifterOveride = true;
     }
 
 
@@ -219,6 +220,11 @@ public class Lifters {
             }
         };
 
+    }
+
+    public void resetEncoders(){
+        vertLifterR.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        vertLifterL.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
     }
 
 }

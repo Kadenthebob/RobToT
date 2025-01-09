@@ -18,6 +18,7 @@ import static org.firstinspires.ftc.teamcode.pedroPathing.tuning.FollowerConstan
 import static org.firstinspires.ftc.teamcode.pedroPathing.tuning.FollowerConstants.useSecondaryDrivePID;
 import static org.firstinspires.ftc.teamcode.pedroPathing.tuning.FollowerConstants.useSecondaryHeadingPID;
 import static org.firstinspires.ftc.teamcode.pedroPathing.tuning.FollowerConstants.useSecondaryTranslationalPID;
+import static org.firstinspires.ftc.teamcode.pedroPathing.tuning.FollowerConstants.AutoMoveDrivePIDFCoefficients;
 
 import androidx.annotation.NonNull;
 
@@ -142,6 +143,8 @@ public class Follower {
     private PIDFController translationalIntegral = new PIDFController(FollowerConstants.translationalIntegral);
     private PIDFController secondaryHeadingPIDF = new PIDFController(FollowerConstants.secondaryHeadingPIDFCoefficients);
     private PIDFController headingPIDF = new PIDFController(FollowerConstants.headingPIDFCoefficients);
+    private PIDFController autoXMovePIDF = new PIDFController(FollowerConstants.AutoMoveDrivePIDFCoefficients);
+    private PIDFController autoYMovePIDF = new PIDFController(FollowerConstants.AutoMoveDrivePIDFCoefficients);
     private FilteredPIDFController secondaryDrivePIDF = new FilteredPIDFController(FollowerConstants.secondaryDrivePIDFCoefficients);
     private FilteredPIDFController drivePIDF = new FilteredPIDFController(FollowerConstants.drivePIDFCoefficients);
 
@@ -157,6 +160,8 @@ public class Follower {
     public static boolean useDrive = true;
 
     public boolean Looping = false;
+
+    VoltageSensor voltageSensor;
 
     /**
      * This creates a new Follower given a HardwareMap.
@@ -199,7 +204,7 @@ public class Follower {
             motor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
         }
 
-        VoltageSensor voltageSensor = hardwareMap.voltageSensor.iterator().next();
+        voltageSensor = hardwareMap.voltageSensor.iterator().next();
 
         FollowerConstants.xMovement = (FollowerConstants.xMaxMovement/FollowerConstants.xVolts) * voltageSensor.getVoltage();
         FollowerConstants.yMovement = (FollowerConstants.yMaxMovement/FollowerConstants.yVolts) * voltageSensor.getVoltage();
@@ -1228,16 +1233,17 @@ public class Follower {
             double x;
             double y;
             Pose endPoint;
+            Pose endPointSV;
             boolean driving = false;
             boolean looping = false;
             boolean wait = false;
             ElapsedTime time = new ElapsedTime();
+            ElapsedTime driveReset = new ElapsedTime();
 
             @Override
             public boolean run(@NonNull TelemetryPacket packet) {
-                x = cam.getObjX();
-                y = cam.getObjY();
-                rotation = cam.getObjRot();
+                x = cam.targetAdjX();
+                y = cam.targetAdjY();
                 if ((time.time() < 5 && (x == -1 && y == -1) || !wait) && !driving) {
                     cam.resetTarget();
                     start = getPose();
@@ -1255,10 +1261,9 @@ public class Follower {
                 } else if (!driving) {
                     time.reset();
                     start = getPose();
-                    cam2inch = cam.getCam2Inch();
 
-                    double xChange = (cam.getTargetX() - cam.getObjX()) * cam2inch;
-                    double yChange = (cam.getTargetY() - cam.getObjY()) * cam2inch;
+                    double xChange = (cam.getTargetX() - x) * cam.getCam2InchX();
+                    double yChange = (cam.getTargetY() - y) * cam.getCam2InchY();
 
                     endPoint = MathFunctions.rotatePose(new Pose(yChange + 2, xChange, 0), start.getHeading(), true);
                     endPoint.add(start);
@@ -1273,11 +1278,35 @@ public class Follower {
                                     .build()
                             , true);
                     driving = true;
+                    endPointSV = endPoint.copy();
+                    driveReset.reset();
                     return true;
-                } else if (endPoint.roughlyEquals(getPose(), .7) || time.time() > 2.5) {
-                    return false;
 
                 } else {
+
+                    double xChange = (cam.getTargetX() - x) * cam.getCam2InchY();
+                    double yChange = (cam.getTargetY() - y) * cam.getCam2InchY();
+
+                    endPoint = MathFunctions.rotatePose(new Pose(yChange + FollowerConstants.autoGrabOffX, xChange+FollowerConstants.autoGrabOffY, 0), start.getHeading(), true);
+                    endPoint.add(start);
+
+                    if(driveReset.time()>.2&&false){
+                        followPath(
+                                pathBuilder().addPath(
+                                                new BezierLine(
+                                                        new Point(start),
+                                                        new Point(endPoint)
+                                                )
+                                        )
+                                        .setConstantHeadingInterpolation(start.getHeading())
+                                        .build()
+                                , true);
+                        endPointSV = endPoint.copy();
+                        driveReset.reset();
+                    }
+                    if (endPoint.roughlyEquals(getPose(), .7) || time.time() > 2.5) {
+                        return false;
+                    }
                     packet.put("obj x", x);
                     packet.put("obj y", y);
                     packet.put("time", time.time());
@@ -1287,7 +1316,7 @@ public class Follower {
         };
     }
 
-    public Action AutoMoveLoop(Camera cam) {
+    public Action AutoMoveLoop(Camera cam,Intake intk) {
         return new Action() {
             double rotation, targetYaw, cam2inch;
             double x;
@@ -1298,46 +1327,63 @@ public class Follower {
             boolean looping = false;
             boolean wait = false;
             ElapsedTime time = new ElapsedTime();
+            ElapsedTime moveTime = new ElapsedTime();
             ElapsedTime pathTimeout = new ElapsedTime();  // Added timeout for path following
 
             @Override
             public boolean run(@NonNull TelemetryPacket packet) {
-                x = cam.getObjX();
-                y = cam.getObjY();
-                rotation = cam.getObjRot();
-
+                x = cam.targetAdjX();
+                y = cam.targetAdjY();
+                intk.setTwistMatchObjAngle(cam);
+                intk.SetClawAutoOpen(cam);
                 // Fixed parentheses for correct logic evaluation
-                if (time.time() < 5 && ((x == -1 && y == -1) || !wait) && !driving) {
+
+                if(!wait){
+                    autoXMovePIDF.reset();
+                    autoYMovePIDF.reset();
+                    time.reset();
+                    moveTime.reset();
                     cam.resetTarget();
                     start = getPose();
                     breakFollowing();
-                    packet.put("obj x", x);
-                    packet.put("obj y", y);
-                    packet.put("w1", cam.getWidth());
-                    packet.put("w2", cam.getHeight());
-                    tarHeading = getPose().getHeading();
                     wait = true;
-                    return true;
-
-                } else if ((x == -1 && y == -1) && !looping) {
-                    //if no obj detected
+                }
+                if(time.time()>100){
                     return false;
-
-                    // Changed to OR condition for vision alignment
-                } else if ((Math.abs(cam.getTargetX() - cam.getObjX()) > 15 ||
-                        Math.abs(cam.getTargetY() - cam.getObjY()) > 15) && !driving) {
+                }
+//                if (((x == -1 && y == -1) || !wait) && !driving&&!looping) {
+//                    cam.resetTarget();
+//                    start = getPose();
+//                    breakFollowing();
+//                    packet.put("obj x", x);
+//                    packet.put("obj y", y);
+//                    packet.put("w1", cam.getWidth());
+//                    packet.put("w2", cam.getHeight());
+//                    tarHeading = getPose().getHeading();
+//                    moveTime.reset();
+//                    wait = true;
+//                    return true;
+//
+//                }
+                if ((Math.abs(cam.getTargetX() - x) > 20 ||
+                        Math.abs(cam.getTargetY() - y) > 20||getVelocityMagnitude()>.5) && !driving && moveTime.time()<2) {
                     looping = true;
                     teleopDrive = true;
 
                     // Calculate movement vectors
-                    double xChange = Math.min(Math.max(.05 * (cam.getTargetX() - cam.getObjX()), -.5), .5);
-                    double yChange = Math.min(Math.max(.05 * (cam.getTargetY() - cam.getObjY()), -.5), .5);
+                    autoXMovePIDF.updateError(cam.getTargetX()-cam.getObjX());
+                    autoYMovePIDF.updateError(cam.getTargetY()-cam.getObjY());
+
+                    packet.put("obj x", x);
+                    packet.put("obj y", y);
+
                     double headingChange = cam.angleCor(1 * (targetYaw - poseUpdater.getPose().getHeading()));
-
+                    if((x == -1 && y == -1)){
+                       setTeleOpMovementVectors(0,0,headingChange);
+                        return true;
+                    }
                     // Single call to setTeleOpMovementVectors
-                    setTeleOpMovementVectors(yChange, xChange, headingChange);
-
-                    time.reset();
+                    setTeleOpMovementVectors(MathFunctions.clamp(12*(autoYMovePIDF.runPIDF()/voltageSensor.getVoltage()),-.3,.3), MathFunctions.clamp(12*(autoXMovePIDF.runPIDF()/voltageSensor.getVoltage()),-.3,.3), headingChange);
                     return true;
 
                 } else if(!driving && looping) {
@@ -1345,8 +1391,13 @@ public class Follower {
                     teleopDrive = false;
 
                     start = getPose();
-                    endPoint = MathFunctions.rotatePose(new Pose(2, 0, 0), start.getHeading(), true);
+                    double xChange = (cam.getTargetX() - x) * cam.getCam2InchY();
+                    double yChange = (cam.getTargetY() - y) * cam.getCam2InchY();
+
+                    endPoint = MathFunctions.rotatePose(new Pose(yChange + FollowerConstants.autoGrabOffX, xChange+FollowerConstants.autoGrabOffY, 0), start.getHeading(), true);
                     endPoint.add(start);
+
+                    cam.setSelected();
 
                     followPath(
                             pathBuilder().addPath(
@@ -1364,7 +1415,7 @@ public class Follower {
                     return true;
 
                     // Added timeout condition (10 seconds) for path following
-                } else if(endPoint.roughlyEquals(getPose(), .7) || pathTimeout.time() > 10) {
+                } else if((endPoint.roughlyEquals(getPose(), .7) || pathTimeout.time() > 1.5)&&driving) {
                     return false;
                 }
                 return true;
@@ -1386,19 +1437,28 @@ public class Follower {
                 x = cam.getObjX();
                 y = cam.getObjY();
                 rotation = cam.getObjRot();
-                if ((time.time() < 5 && (x == -1 && y == -1) || !wait) && !driving) {
-                    cam.resetTarget();
+                if (((time.time() < 5 && (x == -1 && y == -1) || !wait) && !driving)||FollowerConstants.autoWait) {
+//                    cam.resetTarget();
                     start = getPose();
                     breakFollowing();
-                    packet.put("obj x", x);
-                    packet.put("obj y", y);
-                    packet.put("w1", cam.getWidth());
-                    packet.put("w2", cam.getHeight());
+                    double xChange = (cam.getTargetX() - x) * cam.getCam2InchY();
+                    double yChange = (cam.getTargetY() - y) * cam.getCam2InchY();
+                    packet.put("obj x", Math.floor(x));
+                    packet.put("obj y", Math.floor(y));
+                    packet.put("obj x adj", Math.floor(x));
+                    packet.put("obj y adj", Math.floor(cam.targetAdjY()));
+                    packet.put("x Change", Math.floor(xChange*100)/100);
+                    packet.put("y Change", Math.floor(yChange*100)/100);
+                    packet.put("x dif", Math.floor(cam.getTargetDifX()*100)/100);
+                    packet.put("y dif", Math.floor(cam.getTargetDifY()*100)/100);
                     wait = true;
                     return true;
 
                 }
                 cam.setSelected();
+                if(FollowerConstants.autoWait){
+                    return true;
+                }
                 return false;
             }
         };
@@ -1410,20 +1470,25 @@ public class Follower {
 
     public Action AutoGrab(Camera cam, Intake intk, Lifters lift, Boolean teleOp){
         Action tele = new SleepAction(0);
+        Action wait = new SleepAction(0);
         if(teleOp){
             tele = new InstantAction(()->this.teleopDrive=true);
         }
+        if(FollowerConstants.autoWait){
+            wait = new SleepAction(100000);
+        }
         return new SequentialAction(
                 lift.setVertLifterPos(700,1),
-                new SleepAction(.2),
                 intk.SetElbowPos(15),
                 WaitForDetect(cam),
                 intk.SetClawAutoOpen(cam),
                 intk.SetTwistMatchObjAngle(cam),
+                wait,
                 new ParallelAction(
-                        AutoMove(cam),
-                        lift.setVertLifterPos(250,1)
+                        AutoMoveLoop(cam,intk)
+                        //lift.setVertLifterPos(350,.2)
                 ),
+                new SleepAction(.5),
                 lift.setVertLifterPos(50,1),
                 intk.SetClawAutoClose(cam),
                 new SleepAction(.25),
