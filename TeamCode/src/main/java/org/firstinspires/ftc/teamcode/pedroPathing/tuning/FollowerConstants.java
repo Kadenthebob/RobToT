@@ -175,7 +175,7 @@ public class FollowerConstants {
 
     // Secondary translational PIDF coefficients (don't use integral)
     public static CustomPIDFCoefficients secondaryTranslationalPIDFCoefficients = new CustomPIDFCoefficients(
-            0.325,
+            0.275,
             0,
             0.035,
             0);

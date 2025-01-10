@@ -543,7 +543,7 @@ public class Follower {
                     limitDrivePowers();
 
                     for (int i = 0; i < motors.size(); i++) {
-                        motors.get(i).setPower(drivePowers[i]);
+                        motors.get(i).setPower(drivePowers[i]*(12/voltageSensor.getVoltage()));
                     }
                 } else {
                     if (isBusy) {
@@ -1194,7 +1194,7 @@ public class Follower {
         return new Action() {
             @Override
             public boolean run(@NonNull TelemetryPacket packet) {
-                return (!pos.roughlyEquals(getPose(),.5));
+                return (!pos.roughlyEquals(getPose(),.6));
             }
         };
     }
