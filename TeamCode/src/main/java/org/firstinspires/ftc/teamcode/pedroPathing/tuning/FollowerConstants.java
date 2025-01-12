@@ -220,12 +220,13 @@ public class FollowerConstants {
     public static double secondaryDrivePIDFFeedForward = 0.01;
 
     public static CustomPIDFCoefficients AutoMoveDrivePIDFCoefficients = new CustomPIDFCoefficients(
-            0.00125,
-            0.0007,
-            .00005,
+            0.0013,
+            0.000,
+            .00006,
             0);
 
-    public static double autoGrabOffX = 4;
-    public static double autoGrabOffY = 0;
+    public static double autoGrabOffX = -3.5;
+    public static double autoGrabOffY = -.25;
+    public static double autoGrabMaxPower = .6;
     public static boolean autoWait = false;
 }

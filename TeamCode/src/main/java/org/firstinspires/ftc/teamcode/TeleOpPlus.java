@@ -3,6 +3,8 @@ package org.firstinspires.ftc.teamcode;
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.Action;
+import com.acmerobotics.roadrunner.ParallelAction;
+import com.acmerobotics.roadrunner.SequentialAction;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -32,6 +34,8 @@ public class TeleOpPlus extends LinearOpMode {
     Follower follower;
     Camera cam;
     double xMov, yMov = 0;
+    boolean holdingA = false;
+    boolean holdingY = false;
 
     @Override
     public void runOpMode(){
@@ -57,13 +61,11 @@ public class TeleOpPlus extends LinearOpMode {
         while(opModeIsActive()){
             looping();
         }
-        lift.lifterHoldOff();
     }
 
 
     public void looping() {
         TelemetryPacket packet = new TelemetryPacket();
-        lift.lifterHold().run(packet);
 
         // update running actions
         List<Action> newActions = new ArrayList<>();
@@ -116,40 +118,53 @@ public class TeleOpPlus extends LinearOpMode {
         }
 
         double brakeCoeff = 1-gamepad1.right_trigger;
-        follower.setTeleOpMovementVectors((-gamepad1.left_stick_y+yMov)*brakeCoeff, (-gamepad1.left_stick_x+xMov)*brakeCoeff, -gamepad1.right_stick_x, true);
+        if(!follower.getTeleOpOveride(cam)) {
+            follower.setTeleOpMovementVectors((-gamepad1.left_stick_y + yMov) * brakeCoeff, (-gamepad1.left_stick_x + xMov) * brakeCoeff, -gamepad1.right_stick_x, true);
+        }
         follower.update();
 
+//        intk.setTrunkPower(-gamepad2.left_stick_y);
+
         //gamepad 2
-        if(gamepad2.a){  //intake in
-            intk.setClawPos(0);
-        } else if(gamepad2.b) {  //intake out
-            intk.setClawPos(65);
-        }
-        if(gamepad2.y){
-            intk.setTwistMatchObjAngle(cam,!cam.getSurrounded());
+
+        if(gamepad2.a&&!holdingA){
+            holdingA = true;//intake in
+            intk.toggleClaw();
+        } else if(!gamepad2.a){
+            holdingA = false;
         }
 
 
         //turn off when not touching those two buttons
-        if (gamepad2.dpad_left&&ArmAction.size()==0){
-            ArmAction.add(intk.SetTrunkHoop());
-        }
-        else if(gamepad2.dpad_up&&ArmAction.size()==0){
-            ArmAction.add(intk.SetTrunkPit());
-        }else if(gamepad2.dpad_down&&ArmAction.size()==0) {
+        if (gamepad2.x&&ArmAction.size()==0){
+            ArmAction.add(new ParallelAction(intk.SetTrunkHoop(),lift.setVertLifterPos(4050,1)));
+        } else if(gamepad2.dpad_up&&ArmAction.size()==0){
+            ArmAction.add(new ParallelAction(intk.SetTrunkPit(), lift.setVertLifterPos(700,1)));
+        } else if(gamepad2.dpad_down&&ArmAction.size()==0) {
             ArmAction.add(intk.SetTrunkWall());
-        } else if(gamepad2.dpad_right&&ArmAction.size()==0){
-            ArmAction.add(intk.SetSpec(lift));
+        }
+        else if(gamepad2.back&&ArmAction.size()==0){
+            ArmAction.add(lift.setVertLifterZero(1));
         }
 
+        if(gamepad2.y&&!holdingY&&ArmAction.size()==0){
+            holdingY = true;
+            ArmAction.add(intk.SetSpec(lift));
+        } else if(!gamepad2.y&&holdingY){
+            holdingY = false;
+            try{
+                ArmAction.set(0,intk.SetSpecRelease(lift));
+            } catch(Exception e){
+                ArmAction.add(intk.SetSpecRelease(lift));
+            }
+
+        }
 
          //lift using triggers
         if(Math.abs(-gamepad2.right_trigger+gamepad2.left_trigger)>0.01){
-            lift.vertLifterR.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-            lift.vertLifterL.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
             lift.setVertLifterPower(-gamepad2.right_trigger+gamepad2.left_trigger);
         }else{
-            lift.lifterOverideOff();
+            lift.lifterHold().run(packet);
         }
 
 
@@ -179,8 +194,9 @@ public class TeleOpPlus extends LinearOpMode {
         telemetry.addData("max X", FollowerConstants.xMovement);
         telemetry.addData("focus",cam.cam.getFocusControl().getMinFocusLength());
         telemetry.addData("trigger",gamepad1.right_trigger);
+        telemetry.addData("holdingA",holdingA);
+        telemetry.addData("trigger",gamepad1.right_trigger);
 
         telemetry.update();
-
     }
 }

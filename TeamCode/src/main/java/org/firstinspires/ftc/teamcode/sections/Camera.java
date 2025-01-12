@@ -12,7 +12,6 @@ import org.opencv.core.Mat;
 import org.opencv.core.MatOfPoint;
 import org.opencv.core.MatOfPoint2f;
 import org.opencv.core.Point;
-import org.opencv.core.Rect;
 import org.opencv.core.RotatedRect;
 import org.opencv.core.Scalar;
 import org.opencv.core.Size;
@@ -36,8 +35,8 @@ public class Camera {
         public static boolean TRACK_YELLOW = true;
         public static boolean TRACK_TARGET_COLOR = true;
 
-        public static int OBJ_TARGET_X = 193;
-        public static int OBJ_TARGET_Y = 193;
+        public static int OBJ_TARGET_X = 164;
+        public static int OBJ_TARGET_Y = 138;
         public static int OBJ_MIN_SIZE = 1500;
 
         public static int CAM_HEIGHT = 360;
@@ -51,7 +50,7 @@ public class Camera {
         public static int CAM_GAIN = 250;
 
         public static boolean useHomography = false;
-        public static boolean doWarp = true;
+        public static boolean doWarp = false;
 
     }
     @Config
@@ -184,7 +183,7 @@ public class Camera {
         cam.openCameraDeviceAsync(new OpenCvCamera.AsyncCameraOpenListener() {
             @Override
             public void onOpened() {
-                cam.startStreaming(PARAMS.CAM_WIDTH, PARAMS.CAM_HEIGHT, OpenCvCameraRotation.UPSIDE_DOWN);
+                cam.startStreaming(PARAMS.CAM_WIDTH, PARAMS.CAM_HEIGHT, OpenCvCameraRotation.UPRIGHT);
                 cam.getFocusControl().setMode(FocusControl.Mode.Fixed);
                 cam.getFocusControl().setFocusLength(CamParams.FOCUS_LENGTH);
                 cam.getExposureControl().setMode(ExposureControl.Mode.Manual);
@@ -355,7 +354,7 @@ public class Camera {
                             temp = rect;
                             tempLength = Math.sqrt(Math.pow(target.center.x - temp.center.x, 2) + Math.pow(target.center.y - temp.center.y, 2));
 
-                            if (tempLength * getCam2InchX() < CamParams.SURROUNDED_DISTANCE) {
+                            if (tempLength * getCam2Inch() < CamParams.SURROUNDED_DISTANCE) {
                                 return true;
                             }
                         }
@@ -547,14 +546,9 @@ public class Camera {
     public boolean getSurrounded(){
         return pipeline.isTargetSurrounded;
     }
-    public double getCam2InchY(){
+    public double getCam2Inch(){
 //        return 1.5 / Math.min(getWidth(), getHeight());
-        return 10.25/CamParams.CAM_HEIGHT; //at 900 height
-    }
-
-    public double getCam2InchX(){
-//        return 1.5 / Math.min(getWidth(), getHeight());
-        return 19/CamParams.CAM_WIDTH; //at 900 height
+        return 15.5/CamParams.CAM_WIDTH; //at 900 height
     }
 
     public void setSelected(){
@@ -594,7 +588,7 @@ public class Camera {
     public double targetAdjY(){
         try {
             double y = getObjY();
-            return y+(y*.0594-27.5);
+            return y;
         } catch(Exception e){
             return -1;
         }

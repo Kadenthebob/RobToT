@@ -10,19 +10,32 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.PwmControl;
 import com.qualcomm.robotcore.hardware.Servo;
-import com.qualcomm.robotcore.hardware.ServoImplEx;;
+import com.qualcomm.robotcore.hardware.ServoImplEx;
+import com.qualcomm.robotcore.hardware.TouchSensor;;
 
 public class Lifters {
     public DcMotor vertLifterR, vertLifterL;
     public ServoImplEx horLifterR, horLifterL;
+    public TouchSensor magR,magL;
     double horLiftPos = 0;
-    int targetPos = 0;
+    int targetPosL = 0;
+    int targetPosR = 0;
     boolean lifterWhileOn = false;
     boolean lifterOveride = false;
-    public static class Params {
+    boolean rMagReset = false;
+    boolean lMagReset = false;
+
+    @Config
+    public static class liftParams {
         public int lifterLimitHigh = 4050;
         public int lifterLimitLow = 0;
-        public double lifterCorCoef = .0008;
+        public double lifterCorCof = .0008;
+        public static boolean doLiftEncoderEqualiser = false;
+        public double getLifterCorCoef(){
+            if(doLiftEncoderEqualiser){
+                return lifterCorCof;
+            } else return 0;
+        }
         //divide by two because of the 1:2 gear ratio on the extendo arm
     }
     @Config
@@ -34,7 +47,7 @@ public class Lifters {
         public static double EXTEND_POWER_COEFF = 4;
     }
     ServoExtendParams servoExtendParams = new ServoExtendParams();
-    Params PARAMS = new Params();
+    liftParams PARAMS = new liftParams();
     public Lifters(HardwareMap hardwareMap) {
         vertLifterR = hardwareMap.get(DcMotor.class, "lifterR");
         vertLifterR.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
@@ -56,6 +69,9 @@ public class Lifters {
         horLifterR.setPwmRange(new PwmControl.PwmRange(500,2500));
         horLifterL.setPwmRange(new PwmControl.PwmRange(500,2500));
 
+        magR = hardwareMap.get(TouchSensor.class,"magR");
+        magL = hardwareMap.get(TouchSensor.class,"magL");
+
     }
 
     public class LifterWhile implements Action {
@@ -65,39 +81,26 @@ public class Lifters {
         @Override
         public boolean run(@NonNull TelemetryPacket packet) {
             if(!lifterOveride) {
-                int pos = targetPos;
+                hallCheck();
                 rPos = vertLifterR.getCurrentPosition();
                 lPos = vertLifterL.getCurrentPosition();
                 lifterAvgPos = (rPos + lPos) / 2;
-                vertLifterR.setTargetPosition(pos);
-                vertLifterL.setTargetPosition(pos);
+                vertLifterR.setTargetPosition(targetPosR);
+                vertLifterL.setTargetPosition(targetPosL);
                 vertLifterR.setMode(DcMotor.RunMode.RUN_TO_POSITION);
                 vertLifterL.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
-                vertLifterR.setPower(power + ((lifterAvgPos - rPos) * PARAMS.lifterCorCoef));
-                vertLifterL.setPower(power + ((lifterAvgPos - lPos) * PARAMS.lifterCorCoef));
+                vertLifterR.setPower(power + ((lifterAvgPos - rPos) * PARAMS.getLifterCorCoef()));
+                vertLifterL.setPower(power + ((lifterAvgPos - lPos) * PARAMS.getLifterCorCoef()));
             }
 
-            return (Math.abs(targetPos-lifterAvgPos) > 15 || lifterWhileOn);
+            return ((Math.abs(targetPosL-lPos) > 15 && Math.abs(targetPosR-rPos) > 15) || lifterWhileOn);
         }
     }
 
     public Action lifterHold(){
         lifterWhileOn = true;
         return new LifterWhile();
-    }
-
-    public Action lifterHoldOff(){
-        return new Action(){
-            @Override
-            public boolean run(@NonNull TelemetryPacket packet) {
-                double rPos = vertLifterR.getCurrentPosition();
-                double lPos = vertLifterL.getCurrentPosition();
-                double lifterAvgPos = (rPos + lPos) / 2;
-
-                return Math.abs(targetPos-lifterAvgPos) > 15;
-            }
-        };
     }
 
     public Action waitForLifter(){
@@ -113,29 +116,6 @@ public class Lifters {
         lifterOveride = false;
     }
 
-    public class SetVertLifterPos implements Action {
-        double rPos,lPos,lifterAvgPos;
-        int pos = 0;
-        double power = 0;
-
-        @Override
-        public boolean run(@NonNull TelemetryPacket packet) {
-            rPos = vertLifterR.getCurrentPosition();
-            lPos = vertLifterL.getCurrentPosition();
-            lifterAvgPos = (rPos + lPos) / 2;
-
-            vertLifterR.setPower(power + ((lifterAvgPos - rPos) * PARAMS.lifterCorCoef));
-            vertLifterL.setPower(power + ((lifterAvgPos - lPos) * PARAMS.lifterCorCoef));
-
-            if(Math.abs(pos-lifterAvgPos) > 15){
-                lifterOveride = true;
-                return true;
-            }else{
-                lifterOveride = false;
-                return false;
-            }
-        }
-    }
     //stupid setup sh*t
     public Action setVertLifterPos(int posPer, double powerPer) {
 
@@ -146,6 +126,8 @@ public class Lifters {
 
             @Override
             public boolean run(@NonNull TelemetryPacket packet) {
+                hallCheck();
+                lifterOveride = true;
                 vertLifterR.setTargetPosition(posPer);
                 vertLifterL.setTargetPosition(posPer);
                 vertLifterR.setMode(DcMotor.RunMode.RUN_TO_POSITION);
@@ -155,13 +137,14 @@ public class Lifters {
                 lPos = vertLifterL.getCurrentPosition();
                 lifterAvgPos = (rPos + lPos) / 2;
 
-                vertLifterR.setPower(power + ((lifterAvgPos - rPos) * PARAMS.lifterCorCoef));
-                vertLifterL.setPower(power + ((lifterAvgPos - lPos) * PARAMS.lifterCorCoef));
+                vertLifterR.setPower(power + ((lifterAvgPos - rPos) * PARAMS.getLifterCorCoef()));
+                vertLifterL.setPower(power + ((lifterAvgPos - lPos) * PARAMS.getLifterCorCoef()));
 
                 if(Math.abs(pos-lifterAvgPos) > 50){
-                    lifterOveride = true;
                     return true;
                 }else{
+                    targetPosR = vertLifterR.getCurrentPosition();
+                    targetPosL = vertLifterL.getCurrentPosition();
                     lifterOveride = false;
                     return false;
                 }
@@ -169,29 +152,66 @@ public class Lifters {
         };
     }
 
+    public Action setVertLifterZero(double powerPer) {
+
+        return new Action(){
+
+            @Override
+            public boolean run(@NonNull TelemetryPacket packet) {
+                vertLifterR.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+                vertLifterL.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+                lifterOveride = true;
+                hallCheck();
+                if(!hallZeroCheck()) {
+                    vertLifterR.setPower(-Math.abs(powerPer));
+                    vertLifterL.setPower(-Math.abs(powerPer));
+                    return true;
+                } else{
+                    lifterOveride = false;
+                    targetPosR = vertLifterR.getCurrentPosition();
+                    targetPosL = vertLifterL.getCurrentPosition();
+                    vertLifterR.setPower(0);
+                    vertLifterL.setPower(0);
+                    return false;
+                }
+
+            }
+        };
+    }
+
     public void setVertLifterPower(double pow){
-        double lifterRpower = pow;
-        double lifterLpower = pow;
-        double rPos = vertLifterR.getCurrentPosition();
-        double lPos = vertLifterL.getCurrentPosition();
-        double lifterAvgPos = Math.max(Math.min((rPos+lPos)/2,PARAMS.lifterLimitHigh),PARAMS.lifterLimitLow);
-
-        lifterRpower += (lifterAvgPos-rPos)*PARAMS.lifterCorCoef;
-        lifterLpower += (lifterAvgPos-lPos)*PARAMS.lifterCorCoef;
-
         if(!lifterOveride) {
+            hallCheck();
+
+
+
+            double lifterRpower = pow;
+            double lifterLpower = pow;
+            double rPos = vertLifterR.getCurrentPosition();
+            double lPos = vertLifterL.getCurrentPosition();
+            double lifterAvgPos = Math.max(Math.min((rPos+lPos)/2,PARAMS.lifterLimitHigh),PARAMS.lifterLimitLow);
+
+            lifterRpower += (lifterAvgPos-rPos)*PARAMS.getLifterCorCoef();
+            lifterLpower += (lifterAvgPos-lPos)*PARAMS.getLifterCorCoef();
+
             if (PARAMS.lifterLimitHigh > lifterAvgPos && pow >= 0) {
+                vertLifterR.setTargetPosition(PARAMS.lifterLimitHigh);
+                vertLifterL.setTargetPosition(PARAMS.lifterLimitHigh);
+                vertLifterR.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                vertLifterL.setMode(DcMotor.RunMode.RUN_TO_POSITION);
                 vertLifterR.setPower(lifterRpower);
                 vertLifterL.setPower(lifterLpower);
-            } else if (PARAMS.lifterLimitLow < lifterAvgPos && pow <= 0) {
+            } else if (!hallZeroCheck() && pow <= 0) {
+                vertLifterR.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+                vertLifterL.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
                 vertLifterR.setPower(lifterRpower);
                 vertLifterL.setPower(lifterLpower);
             } else {
                 vertLifterR.setPower(lifterRpower - pow);
                 vertLifterL.setPower(lifterLpower - pow);
             }
-            targetPos = (int)lifterAvgPos;
-            lifterOveride = true;
+            targetPosR = vertLifterR.getCurrentPosition();
+            targetPosL = vertLifterL.getCurrentPosition();
         }
     }
 
@@ -220,6 +240,21 @@ public class Lifters {
             }
         };
 
+    }
+    public void hallCheck(){
+        if(magR.isPressed()&&!rMagReset){
+            vertLifterR.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+            rMagReset = true;
+        }else if (!magR.isPressed()) rMagReset = false;
+
+        if(magL.isPressed()&&!lMagReset){
+            vertLifterL.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+            lMagReset = true;
+        }else if (!magL.isPressed()) lMagReset = false;
+    }
+
+    public boolean hallZeroCheck(){
+        return (magR.isPressed() || magL.isPressed());
     }
 
     public void resetEncoders(){

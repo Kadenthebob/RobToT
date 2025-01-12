@@ -5,6 +5,7 @@ import androidx.annotation.NonNull;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.Action;
+import com.acmerobotics.roadrunner.ParallelAction;
 import com.acmerobotics.roadrunner.SequentialAction;
 import com.acmerobotics.roadrunner.SleepAction;
 import com.qualcomm.robotcore.hardware.CRServo;
@@ -45,6 +46,9 @@ public class Intake {
     double armPos = 0;
     double elbowOffest = 0;
     double trunkOffset = 0;
+
+    boolean autoOveride = false;
+    boolean clawOpen = false;
 
     ServoTwistParams twistParams = new ServoTwistParams();
 
@@ -99,6 +103,7 @@ public class Intake {
             @Override
             public boolean run(@NonNull TelemetryPacket packet) {
                 setClawPos(0);
+                clawOpen = false;
                 return false;
             }
         };
@@ -109,17 +114,37 @@ public class Intake {
             @Override
             public boolean run(@NonNull TelemetryPacket packet) {
                 setClawPos(65);
+                clawOpen = true;
                 return false;
             }
         };
     }
+
+    public void setClawAutoOpen(Camera cam){
+        if(cam.getSelectedSurrounded()){
+            setClawPos(0);
+            clawOpen = false;
+        }else{
+            setClawPos(65);
+            clawOpen = true;
+        }
+    }
+
+    public void setClawAutoClose(Camera cam){
+        if(cam.getSelectedSurrounded()){
+            setClawPos(65);
+            clawOpen = true;
+        }else{
+            setClawPos(0);
+            clawOpen = false;
+        }
+    }
+
     public Action SetClawAutoOpen(Camera cam){
         return new Action(){
             @Override
             public boolean run(@NonNull TelemetryPacket packet) {
-                if(cam.getSelectedSurrounded()){
-                    setClawPos(0);
-                }else setClawPos(65);
+                setClawAutoOpen(cam);
                 return false;
             }
         };
@@ -129,12 +154,20 @@ public class Intake {
         return new Action(){
             @Override
             public boolean run(@NonNull TelemetryPacket packet) {
-                if(cam.getSelectedSurrounded()){
-                    setClawPos(65);
-                }else setClawPos(0);
+                setClawAutoClose(cam);
                 return false;
             }
         };
+    }
+
+    public void toggleClaw(){
+        if(clawOpen){
+            setClawPos(0);
+            clawOpen = false;
+        } else{
+            setClawPos(65);
+            clawOpen = true;
+        }
     }
 
     public Action IntakeOut(){
@@ -199,6 +232,12 @@ public class Intake {
         trunkL.setPosition(pos+(trunkOffset/PARAMS.trunkServoMaxTurn));
     }
 
+    public void setTrunkPower(double pow){
+        if(!autoOveride) {
+            armPos = PARAMS.trunkServoMaxTurn * (trunkR.getPosition()) - trunkOffset;
+            setTrunkPos(armPos + pow * 4);
+        }
+    }
 
     public void setTrunkPos(double degree){
         double pos = Math.max(Math.min(degree,PARAMS.trunkMaxDegree),0); //sets a limit to what you can set the servo position to go to
@@ -218,23 +257,6 @@ public class Intake {
         };
     }
 
-//    public Action SetTrunkPit(){
-//        return new Action(){
-//            @Override
-//            public boolean run(@NonNull TelemetryPacket packet) {
-//                setTrunkPit();
-//                return false;
-//            }
-//        };
-//    }
-//    public Action SetTrunkWall(){
-//    return new Action(){
-//        @Override
-//        public boolean run(@NonNull TelemetryPacket packet) {
-//            setTrunkWall();
-//            return false;
-//        }
-//    };
 
     public Action SetTrunkPit(){
         return new SequentialAction(
@@ -273,15 +295,35 @@ public class Intake {
     public Action SetSpec(Lifters lift){
         return new SequentialAction(
                 SetTwistPos(90),
-                SetElbowPos(100),
+                SetElbowPos(115),
                 SetTrunkPos(95),
-                lift.setVertLifterPos(1355,1)
+                lift.setVertLifterPos(1150,1)
         );
     }
 
-    public Action SetSpec2(){
+    public Action SetSpecRelease(Lifters lift){
         return new SequentialAction(
-                SetTrunkPos(100)
+                lift.setVertLifterPos(1700,1),
+                SetClawOpen()
+        );
+    }
+
+    public Action SpecHold(Lifters lift){
+        return new ParallelAction(
+                lift.setVertLifterPos(1180,1),
+                SetTwistPos(90),
+                SetElbowPos(157.8),
+                SetTrunkPos(153.4)
+
+        );
+    }
+
+    public Action SpecRelease(Lifters lift){
+        return new SequentialAction(
+                SetTwistPos(90),
+                SetElbowPos(184.2),
+                SetTrunkPos(97.2)
+
         );
     }
 
@@ -294,8 +336,10 @@ public class Intake {
     }
 
     public void setElbowPower(double pow){
-        armPos = PARAMS.armServoMaxTurn*(arm.getPosition())-elbowOffest;
-        setElbowPos(armPos + pow*PARAMS.armPowerCoeff);
+        if(!autoOveride) {
+            armPos = PARAMS.armServoMaxTurn * (arm.getPosition()) - elbowOffest;
+            setElbowPos(armPos + pow * PARAMS.armPowerCoeff);
+        }
     }
 
     public Action SetElbowPos(double degree){
@@ -317,8 +361,10 @@ public class Intake {
     }
 
     public void setTwistPower(double pow){
-        twistPos = twist.getPosition()*twistParams.TWIST_DEGREE_MAX-twistParams.TWIST_OFFSET;
-        setTwistPos(twistPos + pow * twistParams.TWIST_POWER_COEFF);
+        if(!autoOveride) {
+            twistPos = twist.getPosition() * twistParams.TWIST_DEGREE_MAX - twistParams.TWIST_OFFSET;
+            setTwistPos(twistPos + pow * twistParams.TWIST_POWER_COEFF);
+        }
     }
 
     public void setTwistMatchObjAngle(Camera cam,boolean ninetyOffset){
@@ -355,6 +401,26 @@ public class Intake {
             @Override
             public boolean run(@NonNull TelemetryPacket packet) {
                 setTwistMatchObjAngle(cam);
+                return false;
+            }
+        };
+    }
+
+    public Action autoOverideOff(){
+        return new Action(){
+            @Override
+            public boolean run(@NonNull TelemetryPacket packet) {
+                autoOveride = false;
+                return false;
+            }
+        };
+    }
+
+    public Action autoOverideOn(){
+        return new Action(){
+            @Override
+            public boolean run(@NonNull TelemetryPacket packet) {
+                autoOveride = false;
                 return false;
             }
         };
