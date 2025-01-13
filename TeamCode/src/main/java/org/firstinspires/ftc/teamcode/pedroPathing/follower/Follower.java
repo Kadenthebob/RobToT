@@ -1347,6 +1347,7 @@ public class Follower {
                     wait = true;
                     looping = true;
                     autoGrabbing = true;
+                    targetYaw = start.getHeading();
                 }
                 if(time.time()>5){
                     return false;
