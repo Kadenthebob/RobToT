@@ -1,9 +1,8 @@
 package sections;
 
-import android.text.method.Touch;
-
 import androidx.annotation.NonNull;
 
+import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.Action;
 import com.acmerobotics.roadrunner.InstantAction;
@@ -12,25 +11,17 @@ import com.acmerobotics.roadrunner.SequentialAction;
 import com.acmerobotics.roadrunner.SleepAction;
 import com.pedropathing.follower.Follower;
 import com.pedropathing.localization.Pose;
-import com.pedropathing.pathgen.BezierCurve;
 import com.pedropathing.pathgen.BezierLine;
 import com.pedropathing.pathgen.Path;
 import com.pedropathing.pathgen.PathChain;
 import com.pedropathing.pathgen.Point;
-import com.pedropathing.util.Constants;
-import com.pedropathing.util.Timer;
-import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
-import  com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.TouchSensor;
 import com.qualcomm.robotcore.hardware.VoltageSensor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.pedropathing.pathgen.MathFunctions;
 import com.pedropathing.util.PIDFController;
-import com.pedropathing.util.CustomPIDFCoefficients;
 
-import pedroPathing.constants.FConstants;
-import pedroPathing.constants.LConstants;
 import pedroPathing.constants.AutoGrabConstants;
 
 
@@ -39,7 +30,10 @@ public class Drive extends Follower{
     public Follower follower;
     PIDFController autoXMovePIDF;
     PIDFController autoYMovePIDF;
+
     boolean autoGrabbing = false;
+    boolean looping = false;
+
     VoltageSensor voltageSensor;
     TouchSensor touchFront;
 
@@ -462,6 +456,56 @@ public class Drive extends Follower{
             public boolean run (@NonNull TelemetryPacket packet) {
                 touchReset(x);
                 return true;
+            }
+        };
+    }
+    public Action Update(){
+        return new Action(){
+            boolean start = true;
+            @Override
+            public boolean run(@NonNull TelemetryPacket packet) {
+                if(start == true){
+                    looping = true;
+                    start = false;
+                    update();
+                    return true;
+                }
+                if(looping == true) {
+                    update();
+                    return true;
+                }
+                return false;
+            }
+        };
+    }
+    public Action Update(MultipleTelemetry tele){
+        return new Action(){
+            boolean start = true;
+            @Override
+            public boolean run(@NonNull TelemetryPacket packet) {
+                if(start == true){
+                    looping = true;
+                    start = false;
+                    update();
+                    return true;
+                }
+                if(looping == true) {
+                    update();
+                    telemetryDebug(tele);
+                    return true;
+                }
+                return false;
+            }
+        };
+    }
+
+    public Action StopUpdate(){
+        return new Action(){
+            boolean start = false;
+            @Override
+            public boolean run(@NonNull TelemetryPacket packet) {
+                looping = false;
+                return false;
             }
         };
     }
