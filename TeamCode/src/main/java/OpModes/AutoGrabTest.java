@@ -4,11 +4,14 @@ import com.acmerobotics.roadrunner.ParallelAction;
 import com.acmerobotics.roadrunner.SequentialAction;
 import com.acmerobotics.roadrunner.SleepAction;
 import com.acmerobotics.roadrunner.ftc.Actions;
+import com.pedropathing.util.Constants;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.pedropathing.localization.Pose;
 import com.pedropathing.pathgen.*;
 
+import pedroPathing.constants.FConstants;
+import pedroPathing.constants.LConstants;
 import sections.*;
 
 
@@ -49,7 +52,7 @@ public final class AutoGrabTest extends LinearOpMode {
     @Override
     public void runOpMode() throws InterruptedException {
 
-
+        Constants.setConstants(FConstants.class, LConstants.class);
         follower = new Drive(hardwareMap);
         follower.poseUpdater.resetIMU();
         buildPaths();

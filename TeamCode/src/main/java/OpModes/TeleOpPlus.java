@@ -4,6 +4,7 @@ import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.Action;
 import com.acmerobotics.roadrunner.ParallelAction;
+import com.pedropathing.util.Constants;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
@@ -16,6 +17,8 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.pedropathing.localization.Pose;
 import com.pedropathing.pathgen.*;
 
+import pedroPathing.constants.FConstants;
+import pedroPathing.constants.LConstants;
 import sections.*;
 
 import java.util.ArrayList;
@@ -42,6 +45,7 @@ public class TeleOpPlus extends LinearOpMode {
         lift = new Lifters(hardwareMap);
         intk = new Intake(hardwareMap);
         cam = new Camera(hardwareMap,true);
+        Constants.setConstants(FConstants.class, LConstants.class);
         follower = new Drive(hardwareMap);
         follower.poseUpdater.resetIMU();
         follower.setStartingPose(new Pose(0,0,0));

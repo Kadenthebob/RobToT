@@ -3,6 +3,7 @@ package OpModes;
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
+import com.pedropathing.util.Constants;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
@@ -15,6 +16,8 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.pedropathing.localization.Pose;
 import com.pedropathing.pathgen.*;
 
+import pedroPathing.constants.FConstants;
+import pedroPathing.constants.LConstants;
 import sections.*;
 
 
@@ -65,7 +68,7 @@ public final class MicroMovements extends LinearOpMode {
     @Override
     public void runOpMode() throws InterruptedException {
 
-
+        Constants.setConstants(FConstants.class, LConstants.class);
         follower = new Drive(hardwareMap);
         follower.poseUpdater.resetIMU();
         buildPaths();

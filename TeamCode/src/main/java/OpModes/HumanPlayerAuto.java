@@ -4,11 +4,14 @@ import com.acmerobotics.roadrunner.ParallelAction;
 import com.acmerobotics.roadrunner.SequentialAction;
 import com.acmerobotics.roadrunner.SleepAction;
 import com.acmerobotics.roadrunner.ftc.Actions;
+import com.pedropathing.util.Constants;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.pedropathing.localization.Pose;
 import com.pedropathing.pathgen.*;
 
+import pedroPathing.constants.FConstants;
+import pedroPathing.constants.LConstants;
 import sections.*;
 
 
@@ -19,19 +22,19 @@ public final class HumanPlayerAuto extends LinearOpMode {
     Drive follower;
 
     Pose startPose = new Pose(7.59375, 48, Math.toRadians(0));
-    Pose hockey1 = new Pose(30.75, 34.5, Math.toRadians(-45));
-    Pose hockey15 = new Pose(26, 34.5, Math.toRadians(-150));
+    Pose hockey1 = new Pose(30.75, 35.5, Math.toRadians(-45));
+    Pose hockey15 = new Pose(26, 35.5, Math.toRadians(-150));
     Pose hockey2 = new Pose(30.75, 26.5, Math.toRadians(-45));
     Pose hockey25 = new Pose(28, 26.5, Math.toRadians(-150));
     Pose hockey3 = new Pose(36, 10, Math.toRadians(-40));
-    Pose grab1 = new Pose(15,25, Math.toRadians(0));
-    Pose grab = new Pose(7.6,30, Math.toRadians(0));
+    Pose grab1 = new Pose(17,25, Math.toRadians(0));
+    Pose grab = new Pose(7.5,30, Math.toRadians(0));
     Pose forward = new Pose(7.6,30, Math.toRadians(0));
-    Pose place1 = new Pose(42, 75, Math.toRadians(0));
-    Pose place2 = new Pose(40, 70, Math.toRadians(0));
-    Pose place3 = new Pose(40, 68, Math.toRadians(0));
-    Pose place4 = new Pose(40, 66, Math.toRadians(0));
-    Pose place5 = new Pose(40, 64, Math.toRadians(0));
+    Pose place1 = new Pose(32, 73, Math.toRadians(0));
+    Pose place2 = new Pose(32, 72, Math.toRadians(0));
+    Pose place3 = new Pose(32, 71, Math.toRadians(0));
+    Pose place4 = new Pose(32, 70, Math.toRadians(0));
+    Pose place5 = new Pose(32, 69, Math.toRadians(0));
 
 
 
@@ -200,7 +203,7 @@ public final class HumanPlayerAuto extends LinearOpMode {
     @Override
     public void runOpMode() throws InterruptedException {
 
-
+        Constants.setConstants(FConstants.class, LConstants.class);
         follower = new Drive(hardwareMap);
         follower.poseUpdater.resetIMU();
         buildPaths();
@@ -219,26 +222,29 @@ public final class HumanPlayerAuto extends LinearOpMode {
                         //Aproach Pole
                         new ParallelAction(
                                 follower.FollowPath(placeFirst),
+                                lift.SetHorLifterPos(90),
                                 intk.SetTwistPos(90),
                                 intk.SetElbowPos(115),
                                 intk.SetTrunkPos(95),
                                 intk.SetClawClose(),
                                 new SequentialAction(
-                                        lift.setVertLifterPos(1200,1),
+                                        lift.setVertLifterPos(1150,1),
                                         follower.waitForPoint(place1)
                                 )
                         ),
-                        lift.setVertLifterPos(1700,1),
+                        lift.setVertLifterPos(1800,1),
                         intk.SetClawOpen(),
 
                         new ParallelAction(
                                 follower.FollowPath(hockeyFirst,true),
-                                        lift.SetHorLifterPos(79.5), //.53
+                                        new SleepAction(2),
+                                        //.53
                                         intk.SetTrunkPit(),
                                         intk.SetClawOpen(),
                                         intk.SetTwistPos(45),//.0815
                                 new SequentialAction(
                                         new SleepAction(1),
+                                        lift.setVertLifterPos(200,1),
                                         lift.setVertLifterZero(1),
                                         follower.waitForPose(hockey1)
 
@@ -312,6 +318,7 @@ public final class HumanPlayerAuto extends LinearOpMode {
                         new SleepAction(.15),
                         new ParallelAction(
                                 follower.FollowPath(placeSecond,true),
+                                lift.SetHorLifterPos(90),
                                 intk.SetTwistPos(90),
                                 intk.SetElbowPos(115),
                                 intk.SetTrunkPos(95),
@@ -320,10 +327,11 @@ public final class HumanPlayerAuto extends LinearOpMode {
                                         follower.waitForPose(place2)
                                 )
                         ),
-                        lift.setVertLifterPos(1700,1),
+                        lift.setVertLifterPos(1800,1),
                         intk.SetClawOpen(),
                         new ParallelAction(
                                 follower.FollowPath(grabSecond,true),
+                                lift.SetHorLifterPos(0),
                                 intk.SetElbowPos(300),
                                 intk.SetTwistPos(90),
                                 intk.SetTrunkPos(60),
@@ -337,6 +345,7 @@ public final class HumanPlayerAuto extends LinearOpMode {
                         new SleepAction(.15),
                         new ParallelAction(
                                 follower.FollowPath(placeThird,true),
+                                lift.SetHorLifterPos(90),
                                 intk.SetTwistPos(90),
                                 intk.SetElbowPos(115),
                                 intk.SetTrunkPos(95),
@@ -345,10 +354,11 @@ public final class HumanPlayerAuto extends LinearOpMode {
                                         follower.waitForPose(place3)
                                 )
                         ),
-                        lift.setVertLifterPos(1700,1),
+                        lift.setVertLifterPos(1800,1),
                         intk.SetClawOpen(),
                         new ParallelAction(
                                 follower.FollowPath(grabThird,true),
+                                lift.SetHorLifterPos(0),
                                 intk.SetElbowPos(300),
                                 intk.SetTwistPos(90),
                                 intk.SetTrunkPos(60),
@@ -362,6 +372,7 @@ public final class HumanPlayerAuto extends LinearOpMode {
                         new SleepAction(.15),
                         new ParallelAction(
                                 follower.FollowPath(placeFourth,true),
+                                lift.SetHorLifterPos(90),
                                 intk.SetTwistPos(90),
                                 intk.SetElbowPos(115),
                                 intk.SetTrunkPos(95),
@@ -370,10 +381,11 @@ public final class HumanPlayerAuto extends LinearOpMode {
                                         follower.waitForPose(place4)
                                 )
                         ),
-                        lift.setVertLifterPos(1700,1),
+                        lift.setVertLifterPos(1800,1),
                         intk.SetClawOpen(),
                         new ParallelAction(
                                 follower.FollowPath(grabFourth,true),
+                                lift.SetHorLifterPos(0),
                                 intk.SetElbowPos(300),
                                 intk.SetTwistPos(90),
                                 intk.SetTrunkPos(60),
@@ -387,6 +399,7 @@ public final class HumanPlayerAuto extends LinearOpMode {
                         new SleepAction(.15),
                         new ParallelAction(
                                 follower.FollowPath(placeFifth,true),
+                                lift.SetHorLifterPos(90),
                                 intk.SetTwistPos(90),
                                 intk.SetElbowPos(115),
                                 intk.SetTrunkPos(95),
@@ -395,7 +408,7 @@ public final class HumanPlayerAuto extends LinearOpMode {
                                         follower.waitForPose(place5)
                                 )
                         ),
-                        lift.setVertLifterPos(1700,1),
+                        lift.setVertLifterPos(1800,1),
                         intk.SetClawOpen()
                 )
             )
