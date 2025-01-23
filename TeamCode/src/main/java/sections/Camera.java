@@ -171,7 +171,7 @@ public class Camera {
 
 
 
-        CamParams.redTeam = redTeam;
+//        CamParams.redTeam = redTeam;
         int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
 
         WebcamName webcamName = hardwareMap.get(WebcamName.class, "webcam");
@@ -608,5 +608,42 @@ public class Camera {
         } catch(Exception e){
             return -1;
         }
+    }
+
+    public void setDetectColor(){
+        CamParams.TRACK_YELLOW = false;
+        CamParams.TRACK_TARGET_COLOR = true;
+    }
+
+    public void setDetectBoth(){
+        CamParams.TRACK_YELLOW = true;
+        CamParams.TRACK_TARGET_COLOR = true;
+    }
+    public void setDetectYellow(){
+        CamParams.TRACK_YELLOW = true;
+        CamParams.TRACK_TARGET_COLOR = false;
+    }
+
+    public String getDetectSettings() {
+        boolean yellow = CamParams.TRACK_YELLOW;
+        boolean color = CamParams.TRACK_TARGET_COLOR;
+        boolean team = CamParams.redTeam;
+
+        String output = "";
+        if (!yellow && !color) return "None";
+
+        if (color){
+            if (team) {
+                output += " Red";
+            } else {
+                output += " Blue";
+            }
+        }
+
+        if(yellow){
+            output += "Yellow";
+        }
+
+        return output;
     }
 }

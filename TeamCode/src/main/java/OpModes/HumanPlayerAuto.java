@@ -26,9 +26,9 @@ public final class HumanPlayerAuto extends LinearOpMode {
     Pose hockey15 = new Pose(26, 35.5, Math.toRadians(-150));
     Pose hockey2 = new Pose(30.75, 26.5, Math.toRadians(-45));
     Pose hockey25 = new Pose(28, 26.5, Math.toRadians(-150));
-    Pose hockey3 = new Pose(36, 10, Math.toRadians(-40));
+    Pose hockey3 = new Pose(36, 12, Math.toRadians(-40));
     Pose grab1 = new Pose(17,25, Math.toRadians(0));
-    Pose grab = new Pose(7.5,30, Math.toRadians(0));
+    Pose grab = new Pose(7.25,30, Math.toRadians(0));
     Pose forward = new Pose(7.6,30, Math.toRadians(0));
     Pose place1 = new Pose(32, 73, Math.toRadians(0));
     Pose place2 = new Pose(32, 72, Math.toRadians(0));
@@ -57,6 +57,14 @@ public final class HumanPlayerAuto extends LinearOpMode {
                         // Line 1
                         new BezierCurve(
                                 new Point(place1),
+                                new Point(28,73,Point.CARTESIAN)
+                        )
+                )
+                .setLinearHeadingInterpolation(Math.toRadians(0), Math.toRadians(0))
+                .addPath(
+                        // Line 1
+                        new BezierCurve(
+                                new Point(28,73,Point.CARTESIAN),
                                 new Point(20.000,70.000,Point.CARTESIAN),
                                 new Point(hockey1)
                         )
@@ -244,18 +252,20 @@ public final class HumanPlayerAuto extends LinearOpMode {
                                         intk.SetTwistPos(45),//.0815
                                 new SequentialAction(
                                         new SleepAction(1),
-                                        lift.setVertLifterPos(200,1),
+                                        lift.setVertLifterPos(450,1),
                                         lift.setVertLifterZero(1),
                                         follower.waitForPose(hockey1)
 
                                 )
                         ),
+                        new SleepAction(.75),
+                        lift.setVertLifterZero(1),
                         intk.SetClawClose(),
                         new SleepAction(.15),
                         new ParallelAction(
                                 follower.FollowPath(hockeyFirstPlace,true),
                                 new SequentialAction(
-                                        lift.setVertLifterPos(200,1),
+                                        lift.setVertLifterPos(450,1),
                                         follower.waitForPose(hockey15)
 
                                 )
@@ -268,6 +278,7 @@ public final class HumanPlayerAuto extends LinearOpMode {
 
                                 )
                         ),
+                        new SleepAction(.75),
                         lift.setVertLifterZero(1),
                         intk.SetClawClose(),
                         new SleepAction(.15),

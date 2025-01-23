@@ -16,7 +16,8 @@ public class AutoGrabConstants {
 
     public static double autoGrabOffX = -4;
     public static double autoGrabOffY = -3.1;
-    public static double autoGrabMaxPower = .6;
+    public static double autoGrabMaxPower = .5;
     public static boolean autoWait = false;
+    public static double objLoopDistance = 150;
 
 }

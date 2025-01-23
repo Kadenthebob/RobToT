@@ -40,6 +40,8 @@ public class Drive extends Follower{
     AutoGrabConstants FollowerConstansts = new AutoGrabConstants();
     public Drive(HardwareMap hardwareMap){
         super(hardwareMap);
+        autoYMovePIDF = new PIDFController(AutoGrabConstants.AutoMoveDrivePIDFCoefficients);
+        autoXMovePIDF = new PIDFController(AutoGrabConstants.AutoMoveDrivePIDFCoefficients);
         voltageSensor = hardwareMap.voltageSensor.iterator().next();
         touchFront = hardwareMap.get(TouchSensor.class, "touchFront");
     }
@@ -129,8 +131,15 @@ public class Drive extends Follower{
 
     public Action waitForPose(Pose pos) {
         return new Action() {
+            ElapsedTime time;
             @Override
             public boolean run(@NonNull TelemetryPacket packet) {
+                if(getVelocity().getMagnitude()>.75){
+                    time.reset();
+                }
+                if(time.time()>1.5){
+                    return false;
+                }
                 return (!pos.roughlyEquals(getPose(),.6));
             }
         };
@@ -220,28 +229,30 @@ public class Drive extends Follower{
                     return true;
 
                 } else {
+                    cam.resetTarget();
+                    if(x!=-1 && false) {
+                        double xChange = (cam.getTargetX() - x) * cam.getCam2Inch();
+                        double yChange = (cam.getTargetY() - y) * cam.getCam2Inch();
 
-                    double xChange = (cam.getTargetX() - x) * cam.getCam2Inch();
-                    double yChange = (cam.getTargetY() - y) * cam.getCam2Inch();
+                        endPoint = MathFunctions.rotatePose(new Pose(yChange + AutoGrabConstants.autoGrabOffX, xChange + AutoGrabConstants.autoGrabOffY, 0), start.getHeading(), true);
+                        endPoint.add(start);
 
-                    endPoint = MathFunctions.rotatePose(new Pose(yChange + AutoGrabConstants.autoGrabOffX, xChange+AutoGrabConstants.autoGrabOffY, 0), start.getHeading(), true);
-                    endPoint.add(start);
-
-                    if(driveReset.time()>.1&&false){
-                        followPath(
-                                pathBuilder().addPath(
-                                                new BezierLine(
-                                                        new Point(start),
-                                                        new Point(endPoint)
-                                                )
-                                        )
-                                        .setConstantHeadingInterpolation(start.getHeading())
-                                        .build()
-                                , true);
-                        endPointSV = endPoint.copy();
-                        driveReset.reset();
+                        if (driveReset.time() > .1) {
+                            followPath(
+                                    pathBuilder().addPath(
+                                                    new BezierLine(
+                                                            new Point(start),
+                                                            new Point(endPoint)
+                                                    )
+                                            )
+                                            .setConstantHeadingInterpolation(start.getHeading())
+                                            .build()
+                                    , true);
+                            endPointSV = endPoint.copy();
+                            driveReset.reset();
+                        }
                     }
-                    if (endPoint.roughlyEquals(getPose(), .7) || time.time() > 2.5) {
+                    if (endPoint.roughlyEquals(getPose(), .5) || time.time() > 2.5) {
                         return false;
                     }
                     packet.put("obj x", x);
@@ -344,11 +355,86 @@ public class Drive extends Follower{
                     return true;
 
                     // Added timeout condition (10 seconds) for path following
-                } else if((endPoint.roughlyEquals(getPose(), .5) || pathTimeout.time() > 1.5)&&driving) {
+                } else if((endPoint.roughlyEquals(getPose(), .7) || pathTimeout.time() > 1.5)&&driving) {
                     autoGrabbing = false;
                     return false;
                 }
                 return true;
+            }
+        };
+    }
+
+    public Action AutoMoveLoopOnly(Camera cam,Intake intk) {
+        return new Action() {
+            double rotation, targetYaw, cam2inch;
+            double x;
+            double y;
+            double tarHeading;
+            Pose endPoint;
+            boolean driving = false;
+            boolean looping = false;
+            boolean wait = false;
+            ElapsedTime time = new ElapsedTime();
+            ElapsedTime moveTime = new ElapsedTime();
+            ElapsedTime pathTimeout = new ElapsedTime();  // Added timeout for path following
+
+            @Override
+            public boolean run(@NonNull TelemetryPacket packet) {
+                x = cam.targetAdjX();
+                y = cam.targetAdjY();
+                // Fixed parentheses for correct logic evaluation
+
+                if(!wait){
+                    autoXMovePIDF.reset();
+                    autoYMovePIDF.reset();
+                    time.reset();
+                    moveTime.reset();
+                    cam.resetTarget();
+                    start = getPose();
+                    breakFollowing();
+                    wait = true;
+                    looping = true;
+                    autoGrabbing = true;
+                    targetYaw = start.getHeading();
+                    startTeleopDrive();
+                }
+                if(time.time()>5){
+                    return false;
+                }
+//
+                if ((Math.abs(cam.getTargetX() - x) > AutoGrabConstants.objLoopDistance ||
+                        Math.abs(cam.getTargetY() - y) > AutoGrabConstants.objLoopDistance) && !driving && moveTime.time()<2.5) {
+
+
+                    // Calculate movement vectors
+                    autoXMovePIDF.updateError(320-cam.getObjX());
+                    autoYMovePIDF.updateError(180-cam.getObjY());
+
+                    packet.put("obj x", x);
+                    packet.put("obj y", y);
+
+                    double headingChange = cam.angleCor(1 * (targetYaw - poseUpdater.getPose().getHeading()));
+                    if((x == -1 && y == -1)){
+                        setTeleOpMovementVectors(0,0,headingChange);
+                        return true;
+                    }
+                    // Single call to setTeleOpMovementVectors
+                    setTeleOpMovementVectors(MathFunctions.clamp(12*(autoYMovePIDF.runPIDF()/voltageSensor.getVoltage()),-AutoGrabConstants.autoGrabMaxPower,AutoGrabConstants.autoGrabMaxPower), MathFunctions.clamp(12*(autoXMovePIDF.runPIDF()/voltageSensor.getVoltage()),-AutoGrabConstants.autoGrabMaxPower,AutoGrabConstants.autoGrabMaxPower), headingChange);
+                    return true;
+
+                }
+                endPoint = getPose();
+                followPath(
+                        pathBuilder().addPath(
+                                        new BezierLine(
+                                                new Point(endPoint),
+                                                new Point(endPoint)
+                                        )
+                                )
+                                .setConstantHeadingInterpolation(endPoint.getHeading())
+                                .build()
+                        , true);
+                return false;
             }
         };
     }
@@ -414,11 +500,12 @@ public class Drive extends Follower{
                 intk.SetClawAutoOpen(cam),
                 intk.SetTwistMatchObjAngle(cam),
                 wait,
+                AutoMoveLoopOnly(cam,intk),
+                new SleepAction(.1),
                 new ParallelAction(
 //                        AutoMoveLoop(cam, intk)
-                        AutoMove(cam)
-                        //lift.setVe
-                        // rtLifterPos(350,.2)
+                        AutoMove(cam),
+                        lift.setVertLifterPos(250,1)
                 ),
                 new SleepAction(.5),
                 lift.setVertLifterZero(1),

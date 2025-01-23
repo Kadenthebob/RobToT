@@ -136,30 +136,40 @@ public class TeleOpPlus extends LinearOpMode {
         }
 
 
-        //turn off when not touching those two buttons
-        if (gamepad2.x&&ArmAction.size()==0){
-            ArmAction.add(new ParallelAction(intk.SetTrunkHoop(),lift.setVertLifterPos(4050,1)));
-        } else if(gamepad2.dpad_up&&ArmAction.size()==0){
-            ArmAction.add(new ParallelAction(intk.SetTrunkPit(), lift.setVertLifterPos(700,1)));
-        } else if(gamepad2.dpad_down&&ArmAction.size()==0) {
-            ArmAction.add(intk.SetTrunkWall());
-        }
-        else if(gamepad2.back&&ArmAction.size()==0){
-            ArmAction.add(lift.setVertLifterZero(1));
-        }
-
-        if(gamepad2.y&&!holdingY&&ArmAction.size()==0){
-            holdingY = true;
-            ArmAction.add(intk.SetSpec(lift));
-        } else if(!gamepad2.y&&holdingY){
-            holdingY = false;
-            try{
-                ArmAction.set(0,intk.SetSpecRelease(lift));
-            } catch(Exception e){
-                ArmAction.add(intk.SetSpecRelease(lift));
+        //arm actions
+        //camera adjuster
+        if(gamepad2.back){
+            if(gamepad2.x){
+                cam.setDetectYellow();
+            }else if(gamepad2.y){
+                cam.setDetectBoth();
+            }else if(gamepad2.b){
+                cam.setDetectColor();
+            }
+        }else {
+            if (gamepad2.x && ArmAction.size() == 0) {
+                ArmAction.add(new ParallelAction(intk.SetTrunkHoop(), lift.setVertLifterPos(4050, 1)));
+            } else if (gamepad2.dpad_up && ArmAction.size() == 0) {
+                ArmAction.add(new ParallelAction(intk.SetTrunkPit(), lift.setVertLifterPos(700, 1)));
+            } else if (gamepad2.dpad_down && ArmAction.size() == 0) {
+                ArmAction.add(intk.SetTrunkWall());
             }
 
+            if(gamepad2.y&&!holdingY&&ArmAction.size()==0){
+                holdingY = true;
+                ArmAction.add(intk.SetSpec(lift));
+            } else if(!gamepad2.y&&holdingY){
+                holdingY = false;
+                try{
+                    ArmAction.set(0,intk.SetSpecRelease(lift));
+                } catch(Exception e){
+                    ArmAction.add(intk.SetSpecRelease(lift));
+                }
+
+            }
         }
+
+
 
          //lift using triggers
         if(Math.abs(-gamepad2.right_trigger+gamepad2.left_trigger)>0.01){
@@ -168,8 +178,16 @@ public class TeleOpPlus extends LinearOpMode {
             lift.lifterHold().run(packet);
         }
 
-
-        intk.setTwistPower(gamepad2.left_stick_x); //twist using left joystick
+        if(ArmAction.size()==0) {
+            if (gamepad2.left_stick_x > .1) {
+                intk.setTwistPos(135);
+            }else if (gamepad2.left_stick_x < -.1) {
+                intk.setTwistPos(45);
+            } else {
+                intk.setTwistPos(90);
+            }
+        }
+        //twist using left joystick
         intk.setElbowPower(-gamepad2.right_stick_y);
         if(gamepad2.left_bumper){  //left bumper = extendo forward
             lift.setHorLifterPower(1);
@@ -178,6 +196,10 @@ public class TeleOpPlus extends LinearOpMode {
         }
 
 
+
+        telemetry.addData("Cam Detect Setting", cam.getDetectSettings());
+        telemetry.addLine();
+        telemetry.addLine();
         telemetry.addData("Driver Overide: ", driverOveride);  //print out data
         telemetry.addData("X: ", follower.getPose().getX());
         telemetry.addData("Y: ", follower.getPose().getY());
@@ -189,13 +211,7 @@ public class TeleOpPlus extends LinearOpMode {
         telemetry.addData("extendoL Pos: ", lift.horLifterL.getPosition());
         telemetry.addData("extendoR Pos: ", lift.horLifterR.getPosition());
         telemetry.addData("arm: ", intk.arm.getPosition());
-        telemetry.addData("x", cam.getObjX());
-        telemetry.addData("y", cam.getObjY());
-        telemetry.addData("angle", cam.getObjRot());
         telemetry.addData("focus",cam.cam.getFocusControl().getMinFocusLength());
-        telemetry.addData("trigger",gamepad1.right_trigger);
-        telemetry.addData("holdingA",holdingA);
-        telemetry.addData("trigger",gamepad1.right_trigger);
 
         telemetry.update();
     }
