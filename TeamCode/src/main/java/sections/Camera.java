@@ -46,7 +46,7 @@ public class Camera {
         public static double SURROUNDED_DISTANCE = 3;//in inches
 
         public static double FOCUS_LENGTH = 0;
-        public static double CAM_EXPOSURE = 80000;
+        public static double CAM_EXPOSURE = 13000;
         public static int CAM_GAIN = 250;
 
         public static boolean useHomography = false;
@@ -81,6 +81,7 @@ public class Camera {
     }
     @Config
     public static class CamYellowDetect {
+        private static Mat yellowMask = new Mat();
         public static int L_H = 15;
         public static int L_S = 40;
         public static int L_V = 150;
@@ -90,7 +91,6 @@ public class Camera {
         public static int U_V = 255;
 
         public static Mat getMask(Mat hierarchy){
-            Mat yellowMask = new Mat();
             Core.inRange(hierarchy, new Scalar(L_H, L_S, L_V), new Scalar(U_H, U_S, U_V), yellowMask);
             return yellowMask;
         }
@@ -98,6 +98,7 @@ public class Camera {
 
     @Config
     public static class CamBlueDetect {
+        private static Mat blueMask = new Mat();
         public static int L_H = 100;
         public static int L_S = 80;
         public static int L_V = 80;
@@ -107,7 +108,6 @@ public class Camera {
         public static int U_V = 255;
 
         public static Mat getMask(Mat hierarchy){
-            Mat blueMask = new Mat();
             Core.inRange(hierarchy, new Scalar(L_H, L_S, L_V), new Scalar(U_H, U_S, U_V), blueMask);
             return blueMask;
         }
@@ -132,6 +132,9 @@ public class Camera {
 
     @Config
     public static class CamRedDetect {
+        private static Mat redMask = new Mat();
+        private static Mat redMask2 = new Mat();
+
         public static int FL_H = 172;
         public static int FU_H = 179;
 
@@ -146,12 +149,9 @@ public class Camera {
         public static int U_V = 255;
 
         public static Mat getMask(Mat hierarchy){
-            Mat redMask = new Mat();
-            Mat redMask2 = new Mat();
             Core.inRange(hierarchy, new Scalar(FL_H, L_S, L_V), new Scalar(FU_H, U_S, U_V), redMask);
             Core.inRange(hierarchy, new Scalar(SL_H, L_S, L_V), new Scalar(SU_H, U_S, U_V), redMask2);
             Core.bitwise_or(redMask,redMask2,redMask);
-            redMask2.release();
             return redMask;
         }
     }
