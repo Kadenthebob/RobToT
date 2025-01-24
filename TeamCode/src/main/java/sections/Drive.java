@@ -131,7 +131,7 @@ public class Drive extends Follower{
 
     public Action waitForPose(Pose pos) {
         return new Action() {
-            ElapsedTime time;
+            ElapsedTime time = new ElapsedTime();
             @Override
             public boolean run(@NonNull TelemetryPacket packet) {
                 if(getVelocity().getMagnitude()>.75){

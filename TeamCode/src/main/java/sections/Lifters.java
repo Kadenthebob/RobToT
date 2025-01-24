@@ -29,7 +29,7 @@ public class Lifters {
 
     @Config
     public static class liftParams {
-        public int lifterLimitHigh = 4050;
+        public int lifterLimitHigh = 4500;
         public int lifterLimitLow = 0;
         public double lifterCorCof = .0008;
         public static boolean doLiftEncoderEqualiser = false;

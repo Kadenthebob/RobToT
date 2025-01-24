@@ -117,8 +117,10 @@ public class TeleOpPlus extends LinearOpMode {
                 yMov = 0;
             }
         }
-
-        double brakeCoeff = 1-gamepad1.right_trigger;
+        double brakeCoeff;
+        if(gamepad1.right_bumper){
+            brakeCoeff = .3;
+        }else brakeCoeff = 1-gamepad1.right_trigger;
         if(!follower.getTeleOpOveride(cam)) {
             follower.setTeleOpMovementVectors((-gamepad1.left_stick_y + yMov) * brakeCoeff, (-gamepad1.left_stick_x + xMov) * brakeCoeff, -gamepad1.right_stick_x, true);
         }
@@ -180,9 +182,11 @@ public class TeleOpPlus extends LinearOpMode {
 
         if(ArmAction.size()==0) {
             if (gamepad2.left_stick_x > .1) {
-                intk.setTwistPos(135);
+                intk.setTwistPos(145);
             }else if (gamepad2.left_stick_x < -.1) {
-                intk.setTwistPos(45);
+                intk.setTwistPos(35);
+            }else if (gamepad2.b){
+                intk.setTwistPos(0);
             } else {
                 intk.setTwistPos(90);
             }

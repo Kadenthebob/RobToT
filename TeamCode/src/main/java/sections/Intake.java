@@ -297,13 +297,13 @@ public class Intake {
                 SetTwistPos(90),
                 SetElbowPos(115),
                 SetTrunkPos(95),
-                lift.setVertLifterPos(1150,1)
+                lift.setVertLifterPos(1200,1)
         );
     }
 
     public Action SetSpecRelease(Lifters lift){
         return new SequentialAction(
-                lift.setVertLifterPos(1800,1),
+                lift.setVertLifterPos(1900,1),
                 SetClawOpen()
         );
     }
