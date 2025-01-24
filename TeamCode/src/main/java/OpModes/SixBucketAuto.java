@@ -32,13 +32,13 @@ public final class SixBucketAuto extends LinearOpMode {
 
     private MultipleTelemetry telemetryA;
 
-    Pose startPose = new Pose(7.59375, 96, Math.toRadians(0));
-    Pose grab1 = new Pose(32, 121, Math.toRadians(0));
-    Pose grab2 = new Pose(32, 130.5, Math.toRadians(0));
-    Pose grab3 = new Pose(41.000, 123.106, Math.toRadians(80));
+    Pose startPose = new Pose(7.59375, 96, Math.toRadians(180));
+    Pose grab1 = new Pose(46.25, 107, Math.toRadians(90));
+    Pose grab2 = new Pose(46.25, 120, Math.toRadians(90));
+    Pose grab3 = new Pose(46.25, 125, Math.toRadians(90));
     Pose grabAuto = new Pose(62.544, 98.497, Math.toRadians(-90));
     Pose forward1 = new Pose(12.793,129.207,Math.toRadians(-45));
-    Pose place1 = new Pose(14, 129.207, Math.toRadians(-45));
+    Pose place1 = new Pose(14, 129.207, Math.toRadians(135));
     //Pose place2 = new Pose(14.793, 129.207, Math.toRadians(-45));
 
 
@@ -55,20 +55,8 @@ public final class SixBucketAuto extends LinearOpMode {
                                 new Point(place1)
                         )
                 )
-                .setLinearHeadingInterpolation(Math.toRadians(0), Math.toRadians(-45))
+                .setLinearHeadingInterpolation(Math.toRadians(180), Math.toRadians(135))
                 .build();
-
-        forward = follower.pathBuilder()
-                .addPath(
-                        // Line 1
-                        new BezierLine(
-                                new Point(place1),
-                                new Point(forward1)
-                        )
-                )
-                .setConstantHeadingInterpolation(Math.toRadians(-45))
-                .build();
-
 
 
         grabSecond = follower.pathBuilder()
@@ -79,7 +67,7 @@ public final class SixBucketAuto extends LinearOpMode {
                                 new Point(grab1)
                         )
                 )
-                .setLinearHeadingInterpolation(Math.toRadians(-45), Math.toRadians(0))
+                .setLinearHeadingInterpolation(Math.toRadians(135), Math.toRadians(90))
                 .build();
 
         placeSecond = follower.pathBuilder()
@@ -90,7 +78,7 @@ public final class SixBucketAuto extends LinearOpMode {
                                 new Point(place1)
                         )
                 )
-                .setLinearHeadingInterpolation(Math.toRadians(0), Math.toRadians(-45))
+                .setLinearHeadingInterpolation(Math.toRadians(90), Math.toRadians(135))
                 .build();
 
         grabThird = follower.pathBuilder()
@@ -101,7 +89,7 @@ public final class SixBucketAuto extends LinearOpMode {
                                 new Point(grab2)
                         )
                 )
-                .setLinearHeadingInterpolation(Math.toRadians(-45), Math.toRadians(0))
+                .setLinearHeadingInterpolation(Math.toRadians(135), Math.toRadians(90))
                 .build();
 
         placeThird = follower.pathBuilder()
@@ -112,7 +100,7 @@ public final class SixBucketAuto extends LinearOpMode {
                                 new Point(place1)
                         )
                 )
-                .setLinearHeadingInterpolation(Math.toRadians(0), Math.toRadians(-45))
+                .setLinearHeadingInterpolation(Math.toRadians(90), Math.toRadians(135))
                 .build();
 
         grabFourth = follower.pathBuilder()
@@ -123,7 +111,7 @@ public final class SixBucketAuto extends LinearOpMode {
                                 new Point(grab3)
                         )
                 )
-                .setLinearHeadingInterpolation(Math.toRadians(-45), Math.toRadians(80))
+                .setLinearHeadingInterpolation(Math.toRadians(135), Math.toRadians(90))
                 .build();
         placeFourth = follower.pathBuilder()
                 .addPath(
@@ -133,7 +121,7 @@ public final class SixBucketAuto extends LinearOpMode {
                                 new Point(place1)
                         )
                 )
-                .setLinearHeadingInterpolation(Math.toRadians(80), Math.toRadians(-45))
+                .setLinearHeadingInterpolation(Math.toRadians(90), Math.toRadians(135))
                 .build();
 
         grabPit = follower.pathBuilder()
@@ -145,7 +133,7 @@ public final class SixBucketAuto extends LinearOpMode {
                                 new Point(grabAuto)
                         )
                 )
-                .setLinearHeadingInterpolation(Math.toRadians(-45), Math.toRadians(-90))
+                .setLinearHeadingInterpolation(Math.toRadians(135), Math.toRadians(-90))
                 .build();
 
         placePit = follower.pathBuilder()
@@ -157,7 +145,7 @@ public final class SixBucketAuto extends LinearOpMode {
                                 new Point(place1)
                         )
                 )
-                .setLinearHeadingInterpolation(Math.toRadians(-90), Math.toRadians(-45))
+                .setLinearHeadingInterpolation(Math.toRadians(-90), Math.toRadians(135))
                 .build();
     }
 
@@ -188,14 +176,14 @@ public final class SixBucketAuto extends LinearOpMode {
                         //Aproach Pole
                         new ParallelAction(
                                 follower.FollowPath(placeFirst,true),
-                                intk.SetTrunkWall(),
+                                intk.SetTrunkPit(),
                                 new SequentialAction(
                                         lift.setVertLifterPos(4300,1),
+                                        lift.SetHorLifterPos(20),
                                         intk.SetClawOpen(),
                                         follower.waitForPose(place1)
                                 )
                         ),
-
 
 
                         new ParallelAction(
@@ -212,10 +200,11 @@ public final class SixBucketAuto extends LinearOpMode {
                         ),
                         intk.SetClawClose(),
                         new SleepAction(.5),
-
+                        lift.SetHorLifterPos(0),
                         new ParallelAction(
                                 follower.FollowPath(placeSecond,true),
-                                intk.SetTrunkWall(),
+                                intk.SetTrunkPit(),
+                                lift.SetHorLifterPos(20),
                                 new SequentialAction(
                                         lift.setVertLifterPos(4300,1),
                                         intk.SetClawOpen(),
@@ -230,7 +219,8 @@ public final class SixBucketAuto extends LinearOpMode {
                                 new SequentialAction(
                                         intk.SetTrunkPit(),
                                         intk.SetClawOpen(),
-                                        intk.SetTwistPos(90)
+                                        intk.SetTwistPos(90),
+                                        lift.SetHorLifterPos(20)
 
                                 ),
                                 new SequentialAction(
@@ -240,25 +230,25 @@ public final class SixBucketAuto extends LinearOpMode {
                         ),
                         intk.SetClawClose(),
                         new SleepAction(.3),
-
+                        lift.SetHorLifterPos(0),
 
                         new ParallelAction(
                                 follower.FollowPath(placeThird,true),
                                 intk.SetTrunkWall(),
                                 new SequentialAction(
                                         lift.setVertLifterPos(4300,1),
+                                        lift.SetHorLifterPos(20),
                                         intk.SetClawOpen(),
                                         follower.waitForPose(place1)
                                 )
                         ),
 
-
-                        lift.SetHorLifterPos(48),
                         new ParallelAction(
                                 follower.FollowPath(grabFourth,true),
                                 new SequentialAction(
                                         intk.SetTrunkPit(),
-                                        intk.SetClawOpen()
+                                        intk.SetClawOpen(),
+                                        lift.SetHorLifterPos(70)
 
                                 ),
                                 new SequentialAction(
@@ -267,7 +257,6 @@ public final class SixBucketAuto extends LinearOpMode {
 
                                 )
                         ),
-                        new SleepAction(.3),
                         intk.SetClawClose(),
                         new SleepAction(.3),
                         lift.SetHorLifterPos(0),
@@ -276,6 +265,7 @@ public final class SixBucketAuto extends LinearOpMode {
                                 intk.SetTrunkWall(),
                                 new SequentialAction(
                                         lift.setVertLifterPos(4300,1),
+                                        lift.SetHorLifterPos(20),
                                         intk.SetClawOpen(),
                                         follower.waitForPose(place1)
                                 )
@@ -307,11 +297,11 @@ public final class SixBucketAuto extends LinearOpMode {
                                 intk.SetTrunkWall(),
                                 new SequentialAction(
                                         lift.setVertLifterPos(4300,1),
+                                        lift.SetHorLifterPos(20),
                                         intk.SetClawOpen(),
                                         follower.waitForPose(place1)
                                 )
                         ),
-
 
 
                         new ParallelAction(
