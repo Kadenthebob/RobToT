@@ -132,8 +132,13 @@ public class Drive extends Follower{
     public Action waitForPose(Pose pos) {
         return new Action() {
             ElapsedTime time = new ElapsedTime();
+            boolean start = true;
             @Override
             public boolean run(@NonNull TelemetryPacket packet) {
+                if(start){
+                    time.reset();
+                    start = false;
+                }
                 if(getVelocity().getMagnitude()>.75){
                     time.reset();
                 }
@@ -423,17 +428,7 @@ public class Drive extends Follower{
                     return true;
 
                 }
-                endPoint = getPose();
-                followPath(
-                        pathBuilder().addPath(
-                                        new BezierLine(
-                                                new Point(endPoint),
-                                                new Point(endPoint)
-                                        )
-                                )
-                                .setConstantHeadingInterpolation(endPoint.getHeading())
-                                .build()
-                        , true);
+                setTeleOpMovementVectors(0,0,0);
                 return false;
             }
         };

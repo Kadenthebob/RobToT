@@ -101,6 +101,10 @@ public class TeleOpPlus extends LinearOpMode {
         if(gamepad1.y&&AutoGrabAction.size()==0){
             runningActions.add(follower.AutoGrab(cam,intk,lift,true));
         }
+        if(gamepad1.b&&AutoGrabAction.size()!=0){
+            runningActions.set(0,intk.autoOverideOff());
+            follower.startTeleopDrive();
+        }
 
         if(!driverOveride) {
             if (gamepad1.dpad_up) {
@@ -121,6 +125,7 @@ public class TeleOpPlus extends LinearOpMode {
         if(gamepad1.right_bumper){
             brakeCoeff = .3;
         }else brakeCoeff = 1-gamepad1.right_trigger;
+
         if(!follower.getTeleOpOveride(cam)) {
             follower.setTeleOpMovementVectors((-gamepad1.left_stick_y + yMov) * brakeCoeff, (-gamepad1.left_stick_x + xMov) * brakeCoeff, -gamepad1.right_stick_x, true);
         }
