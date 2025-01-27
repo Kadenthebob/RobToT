@@ -262,7 +262,7 @@ public class Intake {
         return new SequentialAction(
                 SetTwistPos(0),
                 SetElbowPos(100),
-                SetTrunkPos(190),
+                SetTrunkPos(200),
                 new SleepAction(1),
                 SetElbowPos(15)
         );
@@ -296,7 +296,7 @@ public class Intake {
         return new SequentialAction(
                 SetTwistPos(90),
                 SetElbowPos(115),
-                SetTrunkPos(95),
+                SetTrunkPos(100),
                 lift.setVertLifterPos(1200,1)
         );
     }

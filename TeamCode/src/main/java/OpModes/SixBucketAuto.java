@@ -32,13 +32,12 @@ public final class SixBucketAuto extends LinearOpMode {
 
     private MultipleTelemetry telemetryA;
 
-    Pose startPose = new Pose(7.59375, 96, Math.toRadians(180));
-    Pose grab1 = new Pose(46.25, 107, Math.toRadians(90));
-    Pose grab2 = new Pose(46.25, 120, Math.toRadians(90));
-    Pose grab3 = new Pose(46.25, 125, Math.toRadians(90));
-    Pose grabAuto = new Pose(62.544, 98.497, Math.toRadians(-90));
-    Pose forward1 = new Pose(12.793,129.207,Math.toRadians(-45));
-    Pose place1 = new Pose(14, 129.207, Math.toRadians(135));
+    Pose startPose = new Pose(7.59375, 96, Math.toRadians(0));
+    Pose grab1 = new Pose(23.5, 121, Math.toRadians(0));
+    Pose grab2 = new Pose(23.5, 130, Math.toRadians(0));
+    Pose grab3 = new Pose(40.5, 125.75, Math.toRadians(80));
+    Pose grabAuto = new Pose(62.544, 96, Math.toRadians(-90));
+    Pose place1 = new Pose(12, 130, Math.toRadians(-45));
     //Pose place2 = new Pose(14.793, 129.207, Math.toRadians(-45));
 
 
@@ -55,8 +54,10 @@ public final class SixBucketAuto extends LinearOpMode {
                                 new Point(place1)
                         )
                 )
-                .setLinearHeadingInterpolation(Math.toRadians(180), Math.toRadians(135))
+                .setLinearHeadingInterpolation(Math.toRadians(0), Math.toRadians(-45))
                 .build();
+
+
 
 
         grabSecond = follower.pathBuilder()
@@ -67,7 +68,7 @@ public final class SixBucketAuto extends LinearOpMode {
                                 new Point(grab1)
                         )
                 )
-                .setLinearHeadingInterpolation(Math.toRadians(135), Math.toRadians(90))
+                .setLinearHeadingInterpolation(Math.toRadians(-45), Math.toRadians(0))
                 .build();
 
         placeSecond = follower.pathBuilder()
@@ -78,7 +79,7 @@ public final class SixBucketAuto extends LinearOpMode {
                                 new Point(place1)
                         )
                 )
-                .setLinearHeadingInterpolation(Math.toRadians(90), Math.toRadians(135))
+                .setLinearHeadingInterpolation(Math.toRadians(0), Math.toRadians(-45))
                 .build();
 
         grabThird = follower.pathBuilder()
@@ -89,7 +90,7 @@ public final class SixBucketAuto extends LinearOpMode {
                                 new Point(grab2)
                         )
                 )
-                .setLinearHeadingInterpolation(Math.toRadians(135), Math.toRadians(90))
+                .setLinearHeadingInterpolation(Math.toRadians(-45), Math.toRadians(0))
                 .build();
 
         placeThird = follower.pathBuilder()
@@ -100,7 +101,7 @@ public final class SixBucketAuto extends LinearOpMode {
                                 new Point(place1)
                         )
                 )
-                .setLinearHeadingInterpolation(Math.toRadians(90), Math.toRadians(135))
+                .setLinearHeadingInterpolation(Math.toRadians(0), Math.toRadians(-45))
                 .build();
 
         grabFourth = follower.pathBuilder()
@@ -111,7 +112,7 @@ public final class SixBucketAuto extends LinearOpMode {
                                 new Point(grab3)
                         )
                 )
-                .setLinearHeadingInterpolation(Math.toRadians(135), Math.toRadians(90))
+                .setLinearHeadingInterpolation(Math.toRadians(-45), Math.toRadians(80))
                 .build();
         placeFourth = follower.pathBuilder()
                 .addPath(
@@ -121,7 +122,7 @@ public final class SixBucketAuto extends LinearOpMode {
                                 new Point(place1)
                         )
                 )
-                .setLinearHeadingInterpolation(Math.toRadians(90), Math.toRadians(135))
+                .setLinearHeadingInterpolation(Math.toRadians(80), Math.toRadians(-45))
                 .build();
 
         grabPit = follower.pathBuilder()
@@ -133,7 +134,7 @@ public final class SixBucketAuto extends LinearOpMode {
                                 new Point(grabAuto)
                         )
                 )
-                .setLinearHeadingInterpolation(Math.toRadians(135), Math.toRadians(-90))
+                .setLinearHeadingInterpolation(Math.toRadians(-45), Math.toRadians(-90))
                 .build();
 
         placePit = follower.pathBuilder()
@@ -145,7 +146,7 @@ public final class SixBucketAuto extends LinearOpMode {
                                 new Point(place1)
                         )
                 )
-                .setLinearHeadingInterpolation(Math.toRadians(-90), Math.toRadians(135))
+                .setLinearHeadingInterpolation(Math.toRadians(-90), Math.toRadians(-45))
                 .build();
     }
 
@@ -166,155 +167,175 @@ public final class SixBucketAuto extends LinearOpMode {
 
         waitForStart();
         Actions.runBlocking(
-           //Follower Class loop
-            new ParallelAction(
-                follower.Update(telemetryA),
-                //main sequential
-                new SequentialAction(
-                        intk.SetClawClose(),
-                        intk.SetTwistPos(90),
-                        //Aproach Pole
-                        new ParallelAction(
-                                follower.FollowPath(placeFirst,true),
-                                intk.SetTrunkPit(),
-                                new SequentialAction(
-                                        lift.setVertLifterPos(4300,1),
-                                        lift.SetHorLifterPos(20),
-                                        intk.SetClawOpen(),
-                                        follower.waitForPose(place1)
-                                )
-                        ),
-
-
-                        new ParallelAction(
-                                follower.FollowPath(grabSecond,true),
-                                new SequentialAction(
-                                        intk.SetTrunkPit(),
-                                        intk.SetClawOpen(),
-                                        intk.SetTwistPos(90)
+                //Follower Class loop
+                new ParallelAction(
+                        follower.Update(telemetryA),
+                        //main sequential
+                        new SequentialAction(
+                                lift.SetHorLifterPos(0),
+                                intk.SetClawClose(),
+                                intk.SetTwistPos(90),
+                                //Aproach Pole
+                                intk.SetTrunkPos(90),
+                                intk.SetElbowPos(285),
+                                new ParallelAction(
+                                        follower.FollowPath(placeFirst,true),
+                                        new SequentialAction(
+                                                lift.setVertLifterPos(4050,1),
+                                                intk.SetTrunkPos(60),
+                                                intk.SetElbowPos(300),
+                                                new SleepAction(.5),
+                                                intk.SetClawOpen(),
+                                                follower.waitForPose(place1)
+                                        )
                                 ),
-                                new SequentialAction(
-                                        lift.setVertLifterZero(1),
-                                        follower.waitForPose(grab1)
-                                )
-                        ),
-                        intk.SetClawClose(),
-                        new SleepAction(.5),
-                        lift.SetHorLifterPos(0),
-                        new ParallelAction(
-                                follower.FollowPath(placeSecond,true),
-                                intk.SetTrunkPit(),
-                                lift.SetHorLifterPos(20),
-                                new SequentialAction(
-                                        lift.setVertLifterPos(4300,1),
-                                        intk.SetClawOpen(),
-                                        follower.waitForPose(place1)
-                                )
-                        ),
 
-                        intk.SetClawOpen(),
 
-                        new ParallelAction(
-                                follower.FollowPath(grabThird,true),
-                                new SequentialAction(
-                                        intk.SetTrunkPit(),
-                                        intk.SetClawOpen(),
-                                        intk.SetTwistPos(90),
-                                        lift.SetHorLifterPos(20)
-
+                                new ParallelAction(
+                                        follower.FollowPath(grabSecond,true),
+                                        new SequentialAction(
+                                                lift.SetHorLifterPos(90),
+                                                intk.SetTrunkPit(),
+                                                intk.SetClawOpen(),
+                                                intk.SetTwistPos(90)
+                                        ),
+                                        new SequentialAction(
+                                                lift.setVertLifterZero(1),
+                                                follower.waitForPose(grab1)
+                                        )
                                 ),
-                                new SequentialAction(
-                                        lift.setVertLifterZero(1),
-                                        follower.waitForPose(grab2)
-                                )
-                        ),
-                        intk.SetClawClose(),
-                        new SleepAction(.3),
-                        lift.SetHorLifterPos(0),
+                                new SleepAction(.65),
+                                intk.SetClawClose(),
+                                new SleepAction(.5),
+                                lift.SetHorLifterPos(0),
+                                intk.SetTrunkPos(90),
+                                intk.SetElbowPos(285),
 
-                        new ParallelAction(
-                                follower.FollowPath(placeThird,true),
-                                intk.SetTrunkWall(),
-                                new SequentialAction(
-                                        lift.setVertLifterPos(4300,1),
-                                        lift.SetHorLifterPos(20),
-                                        intk.SetClawOpen(),
-                                        follower.waitForPose(place1)
-                                )
-                        ),
-
-                        new ParallelAction(
-                                follower.FollowPath(grabFourth,true),
-                                new SequentialAction(
-                                        intk.SetTrunkPit(),
-                                        intk.SetClawOpen(),
-                                        lift.SetHorLifterPos(70)
-
+                                new ParallelAction(
+                                        follower.FollowPath(placeSecond,true),
+                                        new SequentialAction(
+                                                lift.setVertLifterPos(4050,1),
+                                                intk.SetTrunkPos(60),
+                                                intk.SetElbowPos(300),
+                                                new SleepAction(.5),
+                                                intk.SetClawOpen(),
+                                                follower.waitForPose(place1)
+                                        )
                                 ),
-                                new SequentialAction(
-                                        lift.setVertLifterZero(1),
-                                        follower.waitForPose(grab3)
-
-                                )
-                        ),
-                        intk.SetClawClose(),
-                        new SleepAction(.3),
-                        lift.SetHorLifterPos(0),
-                        new ParallelAction(
-                                follower.FollowPath(placeFourth,true),
-                                intk.SetTrunkWall(),
-                                new SequentialAction(
-                                        lift.setVertLifterPos(4300,1),
-                                        lift.SetHorLifterPos(20),
-                                        intk.SetClawOpen(),
-                                        follower.waitForPose(place1)
-                                )
-                        ),
 
 
-                        new ParallelAction(
-                                follower.FollowPath(grabPit,true),
-                                new SequentialAction(
-                                        lift.SetHorLifterPos(90),
-                                        intk.SetTrunkPit(),
-                                        intk.SetClawOpen(),
-                                        intk.SetTwistPos(0)
+                                new ParallelAction(
+                                        follower.FollowPath(grabThird,true),
+                                        new SequentialAction(
+                                                lift.SetHorLifterPos(90),
+                                                intk.SetTrunkPit(),
+                                                intk.SetClawOpen(),
+                                                intk.SetTwistPos(90)
 
-
+                                        ),
+                                        new SequentialAction(
+                                                lift.setVertLifterZero(1),
+                                                follower.waitForPose(grab2)
+                                        )
                                 ),
-                                new SequentialAction(
-                                        lift.setVertLifterPos(700,1),
-                                        follower.waitForPose(grabAuto)
-                                )
-                        ),
-                        new SleepAction(1),
-                        follower.AutoGrab(cam,intk,lift),
-                        follower.goToPose(grabAuto),
-                        follower.waitForPose(grabAuto),
-                        lift.SetHorLifterPos(0),
-                        new ParallelAction(
-                                follower.FollowPath(placePit,true),
-                                intk.SetTrunkWall(),
-                                new SequentialAction(
-                                        lift.setVertLifterPos(4300,1),
-                                        lift.SetHorLifterPos(20),
-                                        intk.SetClawOpen(),
-                                        follower.waitForPose(place1)
-                                )
-                        ),
+                                intk.SetClawClose(),
+                                new SleepAction(.5),
+                                lift.SetHorLifterPos(0),
+                                intk.SetTrunkPos(90),
+                                intk.SetElbowPos(285),
+
+                                new ParallelAction(
+                                        follower.FollowPath(placeThird,true),
+                                        new SequentialAction(
+                                                lift.setVertLifterPos(4050,1),
+                                                intk.SetTrunkPos(60),
+                                                intk.SetElbowPos(300),
+                                                new SleepAction(.5),
+                                                intk.SetClawOpen(),
+                                                follower.waitForPose(place1)
+                                        )
+                                ),
+
+                                new ParallelAction(
+                                        follower.FollowPath(grabFourth,true),
+                                        new SequentialAction(
+                                                intk.SetTrunkPit(),
+                                                lift.SetHorLifterPos(40),
+                                                intk.SetClawOpen()
+
+                                        ),
+                                        new SequentialAction(
+                                                lift.setVertLifterZero(.7),
+                                                follower.waitForPose(grab3)
+
+                                        )
+                                ),
+                                intk.SetClawClose(),
+                                new SleepAction(.15),
+                                lift.SetHorLifterPos(0),
+                                intk.SetTrunkPos(90),
+                                intk.SetElbowPos(285),
+                                intk.SetTwistPos(90),
+                                new ParallelAction(
+                                        follower.FollowPath(placeFourth,true),
+                                        new SequentialAction(
+                                                lift.setVertLifterPos(4050,1),
+                                                intk.SetTrunkPos(60),
+                                                intk.SetElbowPos(300),
+                                                new SleepAction(.5),
+                                                intk.SetClawOpen(),
+                                                follower.waitForPose(place1)
+                                        )
+                                ),
 
 
-                        new ParallelAction(
-                                follower.FollowPath(grabPit,true),
-                                intk.SetTrunkWall(),
-                                new SequentialAction(
-                                        lift.setVertLifterPos(50,1),
-                                        follower.waitForPose(grabAuto)
-                                )
-                        ),
-                        new SleepAction(1)
+                                new ParallelAction(
+                                        follower.FollowPath(grabPit,true),
+                                        new SequentialAction(
+                                                lift.SetHorLifterPos(90),
+                                                intk.SetTrunkPit(),
+                                                intk.SetClawOpen(),
+                                                intk.SetTwistPos(0)
+
+
+                                        ),
+                                        new SequentialAction(
+                                                lift.setVertLifterPos(700,1),
+                                                follower.waitForPose(grabAuto)
+                                        )
+                                ),
+                                new SleepAction(1),
+                                follower.AutoGrab(cam,intk,lift),
+                                follower.goToPose(grabAuto),
+                                follower.waitForPose(grabAuto),
+                                lift.SetHorLifterPos(0),
+                                intk.SetTrunkPos(90),
+                                intk.SetElbowPos(285),
+                                new ParallelAction(
+                                        follower.FollowPath(placePit,true),
+                                        new SequentialAction(
+                                                lift.setVertLifterPos(4050,1),
+                                                intk.SetTrunkPos(60),
+                                                intk.SetElbowPos(300),
+                                                new SleepAction(.5),
+                                                intk.SetClawOpen(),
+                                                follower.waitForPose(place1)
+                                        )
+                                ),
+
+
+
+                                new ParallelAction(
+                                        follower.FollowPath(grabPit,true),
+                                        intk.SetTrunkWall(),
+                                        new SequentialAction(
+                                                lift.setVertLifterPos(50,1),
+                                                follower.waitForPose(grabAuto)
+                                        )
+                                ),
+                                new SleepAction(1)
+                        )
                 )
-            )
         );
     }
 

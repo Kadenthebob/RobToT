@@ -142,10 +142,10 @@ public class Drive extends Follower{
                 if(getVelocity().getMagnitude()>.75){
                     time.reset();
                 }
-                if(time.time()>1.5){
+                if(time.time()>1){
                     return false;
                 }
-                return (!pos.roughlyEquals(getPose(),.6));
+                return (!pos.roughlyEquals(getPose(),.75));
             }
         };
     }

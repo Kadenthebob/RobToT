@@ -22,19 +22,19 @@ public final class HumanPlayerAuto extends LinearOpMode {
     Drive follower;
 
     Pose startPose = new Pose(7.59375, 48, Math.toRadians(0));
-    Pose hockey1 = new Pose(30.75, 35.5, Math.toRadians(-45));
-    Pose hockey15 = new Pose(26, 35.5, Math.toRadians(-150));
-    Pose hockey2 = new Pose(30.75, 26.5, Math.toRadians(-45));
-    Pose hockey25 = new Pose(28, 26.5, Math.toRadians(-150));
-    Pose hockey3 = new Pose(36, 12, Math.toRadians(-40));
+    Pose hockey1 = new Pose(30.75, 36, Math.toRadians(-45));
+    Pose hockey15 = new Pose(26, 36, Math.toRadians(-150));
+    Pose hockey2 = new Pose(30.75, 27, Math.toRadians(-45));
+    Pose hockey25 = new Pose(28, 27, Math.toRadians(-150));
+    Pose hockey3 = new Pose(38, 12.5, Math.toRadians(-55));
     Pose grab1 = new Pose(17,25, Math.toRadians(0));
-    Pose grab = new Pose(7.25,30, Math.toRadians(0));
+    Pose grab = new Pose(7.5,30, Math.toRadians(0));
     Pose forward = new Pose(7.6,30, Math.toRadians(0));
-    Pose place1 = new Pose(32, 73, Math.toRadians(0));
-    Pose place2 = new Pose(32, 72, Math.toRadians(0));
-    Pose place3 = new Pose(32, 71, Math.toRadians(0));
-    Pose place4 = new Pose(32, 70, Math.toRadians(0));
-    Pose place5 = new Pose(32, 69, Math.toRadians(0));
+    Pose place1 = new Pose(32.25, 73, Math.toRadians(0));
+    Pose place2 = new Pose(32.5, 72, Math.toRadians(0));
+    Pose place3 = new Pose(32.5, 71, Math.toRadians(0));
+    Pose place4 = new Pose(32.5, 69, Math.toRadians(0));
+    Pose place5 = new Pose(32.5, 68, Math.toRadians(0));
 
 
 
@@ -110,7 +110,7 @@ public final class HumanPlayerAuto extends LinearOpMode {
                                 new Point(hockey3)
                         )
                 )
-                .setLinearHeadingInterpolation(Math.toRadians(-150), Math.toRadians(-40))
+                .setLinearHeadingInterpolation(Math.toRadians(-150), Math.toRadians(-55))
                 .build();
 
         hockeyThirdPlace = follower.pathBuilder()
@@ -121,7 +121,7 @@ public final class HumanPlayerAuto extends LinearOpMode {
                                 new Point(grab1)
                         )
                 )
-                .setLinearHeadingInterpolation(Math.toRadians(-40), Math.toRadians(0))
+                .setLinearHeadingInterpolation(Math.toRadians(-55), Math.toRadians(0))
                 .build();
 
         grabFirst = follower.pathBuilder()
@@ -228,19 +228,20 @@ public final class HumanPlayerAuto extends LinearOpMode {
                 //main sequential
                 new SequentialAction(
                         //Aproach Pole
+                        lift.SetHorLifterPos(90),
+                        intk.SetTwistPos(90),
+                        intk.SetElbowPos(115),
+                        intk.SetTrunkPos(95),
+                        intk.SetClawClose(),
                         new ParallelAction(
                                 follower.FollowPath(placeFirst),
-                                lift.SetHorLifterPos(90),
-                                intk.SetTwistPos(90),
-                                intk.SetElbowPos(115),
-                                intk.SetTrunkPos(95),
-                                intk.SetClawClose(),
+
                                 new SequentialAction(
                                         lift.setVertLifterPos(1150,1),
                                         follower.waitForPoint(place1)
                                 )
                         ),
-                        lift.setVertLifterPos(1800,1),
+                        lift.setVertLifterPos(1900,1),
                         intk.SetClawOpen(),
 
                         new ParallelAction(
@@ -253,15 +254,14 @@ public final class HumanPlayerAuto extends LinearOpMode {
                                 new SequentialAction(
                                         new SleepAction(1),
                                         lift.setVertLifterPos(450,1),
-                                        lift.setVertLifterZero(1),
-                                        follower.waitForPose(hockey1)
+                                        follower.waitForPose(hockey1),
+                                        lift.setVertLifterZero(1)
 
                                 )
                         ),
-                        new SleepAction(.75),
-                        lift.setVertLifterZero(1),
+
                         intk.SetClawClose(),
-                        new SleepAction(.15),
+                        new SleepAction(.1),
                         new ParallelAction(
                                 follower.FollowPath(hockeyFirstPlace,true),
                                 new SequentialAction(
@@ -278,10 +278,10 @@ public final class HumanPlayerAuto extends LinearOpMode {
 
                                 )
                         ),
-                        new SleepAction(.75),
+                        new SleepAction(.3),
                         lift.setVertLifterZero(1),
                         intk.SetClawClose(),
-                        new SleepAction(.15),
+                        new SleepAction(.3),
                         new ParallelAction(
                                 follower.FollowPath(hockeySecondPlace,true),
                                 new SequentialAction(
@@ -300,7 +300,6 @@ public final class HumanPlayerAuto extends LinearOpMode {
 
                                 )
                         ),
-                        lift.SetHorLifterPos(56.1),
                         lift.setVertLifterZero(1),
                         intk.SetClawClose(),
                         new SleepAction(.3),
@@ -406,21 +405,8 @@ public final class HumanPlayerAuto extends LinearOpMode {
                                         follower.waitForPose(grab)
                                 )
                         ),
-                        intk.SetClawClose(),
-                        new SleepAction(.15),
-                        new ParallelAction(
-                                follower.FollowPath(placeFifth,true),
-                                lift.SetHorLifterPos(90),
-                                intk.SetTwistPos(90),
-                                intk.SetElbowPos(115),
-                                intk.SetTrunkPos(95),
-                                new SequentialAction(
-                                        lift.setVertLifterPos(1150,1),
-                                        follower.waitForPose(place5)
-                                )
-                        ),
-                        lift.setVertLifterPos(1800,1),
-                        intk.SetClawOpen()
+                        intk.SetClawClose()
+
                 )
             )
         );

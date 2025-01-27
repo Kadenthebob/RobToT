@@ -6,6 +6,7 @@ import androidx.annotation.NonNull;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.Action;
+import com.pedropathing.pathgen.MathFunctions;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.PwmControl;
@@ -124,7 +125,7 @@ public class Lifters {
         return new Action(){
             double rPos,lPos,lifterAvgPos;
             int pos = posPer;
-            double power = powerPer;
+            double power = MathFunctions.clamp(powerPer,-1,.9);;
 
             @Override
             public boolean run(@NonNull TelemetryPacket packet) {
@@ -184,9 +185,7 @@ public class Lifters {
     public void setVertLifterPower(double pow){
         if(!lifterOveride) {
             hallCheck();
-
-
-
+            pow = MathFunctions.clamp(pow,-1,.9);
             double lifterRpower = pow;
             double lifterLpower = pow;
             double rPos = vertLifterR.getCurrentPosition();
