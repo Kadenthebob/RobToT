@@ -304,7 +304,6 @@ public final class SixBucketAuto extends LinearOpMode {
                                                 follower.waitForPose(grabAuto)
                                         )
                                 ),
-                                new SleepAction(1),
                                 follower.AutoGrab(cam,intk,lift),
                                 follower.goToPose(grabAuto),
                                 follower.waitForPose(grabAuto),

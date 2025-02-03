@@ -1,4 +1,4 @@
-package OpModes;
+package OpModes.Testing;
 
 import com.acmerobotics.roadrunner.ParallelAction;
 import com.acmerobotics.roadrunner.SequentialAction;
@@ -16,7 +16,7 @@ import sections.*;
 
 
 
-@Autonomous(name = "Auto Grab", group = "Auto Testing")
+@Autonomous(name = "Auto Grab", group = "Auto Debug")
 public final class AutoGrabTest extends LinearOpMode {
 
     PathChain placeFirst, slideBlocks,grabSecond,placeSecond,grabThird,placeThird,grabFourth,placeFourth,camGrab;
@@ -68,9 +68,10 @@ public final class AutoGrabTest extends LinearOpMode {
                 follower.Update(),
                 //main sequential
                 new SequentialAction(
-                        lift.setVertLifterPos(700,1),
-                        follower.WaitForDetect(cam),
-                        follower.goToPose(new Pose(5,0)),
+                        new ParallelAction(
+                                follower.goToPose(new Pose(5,0)),
+                                lift.setVertLifterPos(700,1)
+                        ),
                         follower.waitForPose(new Pose(5,0)),
                         follower.AutoGrab(cam,intk,lift),
 //                        follower.goToPose(new Pose(0,0,0)),

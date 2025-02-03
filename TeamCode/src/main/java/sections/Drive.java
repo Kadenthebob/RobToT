@@ -130,6 +130,10 @@ public class Drive extends Follower{
     }
 
     public Action waitForPose(Pose pos) {
+        return waitForPose(pos, .4);
+    }
+
+    public Action waitForPose(Pose pos, double accuracy) {
         return new Action() {
             ElapsedTime time = new ElapsedTime();
             boolean start = true;
@@ -145,10 +149,11 @@ public class Drive extends Follower{
                 if(time.time()>1){
                     return false;
                 }
-                return (!pos.roughlyEquals(getPose(),.75));
+                return (!pos.roughlyEquals(getPose(),accuracy));
             }
         };
     }
+
     Pose start;
     public Action PostAutoMove() {
         return new Action() {
@@ -574,6 +579,7 @@ public class Drive extends Follower{
                 if(looping == true) {
                     update();
                     telemetryDebug(tele);
+                    drawOnDashBoard();
                     return true;
                 }
                 return false;
