@@ -8,6 +8,7 @@ import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.Action;
 import com.pedropathing.pathgen.MathFunctions;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.PwmControl;
 import com.qualcomm.robotcore.hardware.Servo;
@@ -54,13 +55,13 @@ public class Lifters {
     public Lifters(HardwareMap hardwareMap) {
         vertLifterR = hardwareMap.get(DcMotor.class, "lifterR");
         vertLifterR.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        vertLifterR.setDirection(DcMotor.Direction.REVERSE);
+        vertLifterR.setDirection(DcMotor.Direction.FORWARD);
         vertLifterR.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         vertLifterR.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
         vertLifterL = hardwareMap.get(DcMotor.class, "lifterL");
         vertLifterL.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        vertLifterL.setDirection(DcMotor.Direction.FORWARD);
+        vertLifterL.setDirection(DcMotor.Direction.REVERSE);
         vertLifterL.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         vertLifterL.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
@@ -125,7 +126,7 @@ public class Lifters {
         return new Action(){
             double rPos,lPos,lifterAvgPos;
             int pos = posPer;
-            double power = MathFunctions.clamp(powerPer,-1,.9);;
+            double power = MathFunctions.clamp(powerPer,-1,1);;
 
             @Override
             public boolean run(@NonNull TelemetryPacket packet) {
@@ -185,7 +186,7 @@ public class Lifters {
     public void setVertLifterPower(double pow){
         if(!lifterOveride) {
             hallCheck();
-            pow = MathFunctions.clamp(pow,-1,.9);
+            pow = MathFunctions.clamp(pow,-1,1);
             double lifterRpower = pow;
             double lifterLpower = pow;
             double rPos = vertLifterR.getCurrentPosition();

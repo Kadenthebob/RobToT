@@ -63,25 +63,36 @@ public final class AutoGrabTest extends LinearOpMode {
         Camera cam = new Camera(hardwareMap,false);
         waitForStart();
         Actions.runBlocking(
-           //Follower Class loop
-            new ParallelAction(
-                follower.Update(),
-                //main sequential
-                new SequentialAction(
-                        new ParallelAction(
-                                follower.goToPose(new Pose(5,0)),
-                                lift.setVertLifterPos(700,1)
-                        ),
-                        follower.waitForPose(new Pose(5,0)),
-                        follower.AutoGrab(cam,intk,lift),
-//                        follower.goToPose(new Pose(0,0,0)),
-//                        intk.SetTrunkWall(),
-//                        follower.waitForPose(new Pose(0,0,0)),
-                        new SleepAction(1),
-                        follower.StopUpdate()
+                new ParallelAction(
+                        follower.Update(),
+                        //main sequential
+                        new SequentialAction(
+                                intk.SetTwistPos(90),
+                               follower.AutoMoveLoopOnly(cam,intk),
+                                intk.SetTwistMatchObjAngle(cam),
+                                follower.StopUpdate()
 
+                        )
                 )
-            )
+           //Follower Class loop
+//            new ParallelAction(
+//                follower.Update(),
+//                //main sequential
+//                new SequentialAction(
+//                        new ParallelAction(
+//                                follower.goToPose(new Pose(5,0)),
+//                                lift.setVertLifterPos(700,1)
+//                        ),
+//                        follower.waitForPose(new Pose(5,0)),
+//                        follower.AutoGrab(cam,intk,lift),
+////                        follower.goToPose(new Pose(0,0,0)),
+////                        intk.SetTrunkWall(),
+////                        follower.waitForPose(new Pose(0,0,0)),
+//                        new SleepAction(1),
+//                        follower.StopUpdate()
+//
+//                )
+//            )
         );
     }
 

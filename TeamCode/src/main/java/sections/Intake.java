@@ -368,9 +368,15 @@ public class Intake {
     }
 
     public void setTwistMatchObjAngle(Camera cam,boolean ninetyOffset){
+        double pos = 90-(twist.getPosition() * twistParams.TWIST_DEGREE_MAX - twistParams.TWIST_OFFSET);
         double off = 0;
-        if(!ninetyOffset) off = 90;
-        setTwistPos((180-(cam.getObjRot()+90)+off)%180);
+        if(!ninetyOffset) off += 90;
+        double serv = (180-(cam.getObjRot()+90)+off-pos)%180;
+//        double serv = (180-(cam.getObjRot()+90-pos)+off)%180;
+        if(serv<0){
+            serv+=180;
+        }
+        setTwistPos(serv);
     }
 
     public void setTwistMatchObjAngle(Camera cam){

@@ -35,11 +35,11 @@ public class Camera {
         public static boolean TRACK_YELLOW = true;
         public static boolean TRACK_TARGET_COLOR = true;
 
-        public static int OBJ_TARGET_X = 320;
-        public static int OBJ_TARGET_Y = 158;
+        public static int OBJ_TARGET_X = 240;
+        public static int OBJ_TARGET_Y = 320;
         public static int OBJ_MIN_SIZE = 1500;
 
-        public static int CAM_HEIGHT = 360;
+        public static int CAM_HEIGHT = 480;
         public static int CAM_WIDTH = 640;
         public static boolean redTeam = true;
 
@@ -47,7 +47,7 @@ public class Camera {
 
         public static double FOCUS_LENGTH = 0;
         public static double CAM_EXPOSURE = 13000;
-        public static int CAM_GAIN = 250;
+        public static int CAM_GAIN = 70;
 
         public static boolean useHomography = false;
         public static boolean doWarp = false;
@@ -173,7 +173,6 @@ public class Camera {
 
 //        CamParams.redTeam = redTeam;
         int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
-
         WebcamName webcamName = hardwareMap.get(WebcamName.class, "webcam");
         cam = OpenCvCameraFactory.getInstance().createWebcam(webcamName, cameraMonitorViewId);
 
@@ -183,10 +182,9 @@ public class Camera {
         cam.openCameraDeviceAsync(new OpenCvCamera.AsyncCameraOpenListener() {
             @Override
             public void onOpened() {
-                cam.startStreaming(PARAMS.CAM_WIDTH, PARAMS.CAM_HEIGHT, OpenCvCameraRotation.UPRIGHT);
+                cam.startStreaming(PARAMS.CAM_WIDTH, PARAMS.CAM_HEIGHT, OpenCvCameraRotation.UPSIDE_DOWN, OpenCvWebcam.StreamFormat.MJPEG);
                 cam.getFocusControl().setMode(FocusControl.Mode.Fixed);
                 cam.getFocusControl().setFocusLength(CamParams.FOCUS_LENGTH);
-                cam.getExposureControl().setMode(ExposureControl.Mode.Manual);
                 cam.getExposureControl().setExposure((long)CamParams.CAM_EXPOSURE, TimeUnit.MICROSECONDS);
                 cam.getGainControl().setGain(CamParams.CAM_GAIN);
 

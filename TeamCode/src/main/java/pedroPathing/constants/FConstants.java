@@ -1,6 +1,7 @@
 package pedroPathing.constants;
 
 import com.acmerobotics.dashboard.config.Config;
+import com.pedropathing.follower.Follower;
 import com.pedropathing.localization.Localizers;
 import com.pedropathing.follower.FollowerConstants;
 import com.pedropathing.util.CustomFilteredPIDFCoefficients;
@@ -10,7 +11,7 @@ import com.qualcomm.robotcore.hardware.DcMotorSimple;
 
 public class FConstants {
     static {
-        FollowerConstants.localizers = Localizers.THREE_WHEEL_IMU;
+        FollowerConstants.localizers = Localizers.PINPOINT;
 
         FollowerConstants.leftFrontMotorName = "leftFo2";
         FollowerConstants.leftRearMotorName = "leftB";
@@ -22,13 +23,13 @@ public class FConstants {
         FollowerConstants.rightFrontMotorDirection = DcMotorSimple.Direction.FORWARD;
         FollowerConstants.rightRearMotorDirection = DcMotorSimple.Direction.FORWARD;
 
-        FollowerConstants.mass = 14.56;
+        FollowerConstants.mass = 13.56;
 
-        FollowerConstants.xMovement = 60;
-        FollowerConstants.yMovement = 46.27;
+        FollowerConstants.xMovement = 75.1;
+        FollowerConstants.yMovement = 58.2;
 
-        FollowerConstants.forwardZeroPowerAcceleration = -55.7428;
-        FollowerConstants.lateralZeroPowerAcceleration = -56.5;
+        FollowerConstants.forwardZeroPowerAcceleration = -48.008;
+        FollowerConstants.lateralZeroPowerAcceleration = -77.9724;
 
         FollowerConstants.translationalPIDFCoefficients.setCoefficients(0.18,0,0.019,0);
         FollowerConstants.translationalPIDFFeedForward = 0.024;
@@ -44,13 +45,13 @@ public class FConstants {
         FollowerConstants.useSecondaryHeadingPID = false;
         FollowerConstants.secondaryHeadingPIDFCoefficients.setCoefficients(2,0,0.1,0); // Not being used, @see useSecondaryHeadingPID
 
-        FollowerConstants.drivePIDFCoefficients.setCoefficients(0.0065,0,0.0011,0.6,0);
+        FollowerConstants.drivePIDFCoefficients.setCoefficients(0.00825,0,0.0011,0.6,0);
         FollowerConstants.drivePIDFFeedForward = 0;
 
         FollowerConstants.useSecondaryDrivePID = false;
         FollowerConstants.secondaryDrivePIDFCoefficients.setCoefficients(0.1,0,0,0.6,0); // Not being used, @see useSecondaryDrivePID
 
-        FollowerConstants.zeroPowerAccelerationMultiplier = 3.1;
+        FollowerConstants.zeroPowerAccelerationMultiplier = 5.75;
         FollowerConstants.centripetalScaling = 0.0005;
 
         FollowerConstants.pathEndTimeoutConstraint = 500;

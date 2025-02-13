@@ -11,6 +11,8 @@ import com.acmerobotics.roadrunner.SequentialAction;
 import com.acmerobotics.roadrunner.SleepAction;
 import com.pedropathing.follower.Follower;
 import com.pedropathing.localization.Pose;
+import com.pedropathing.localization.PoseUpdater;
+import com.pedropathing.localization.localizers.OTOSLocalizer;
 import com.pedropathing.pathgen.BezierLine;
 import com.pedropathing.pathgen.Path;
 import com.pedropathing.pathgen.PathChain;
@@ -37,6 +39,7 @@ public class Drive extends Follower{
     VoltageSensor voltageSensor;
     TouchSensor touchFront;
 
+    PoseUpdater localizer2;
     AutoGrabConstants FollowerConstansts = new AutoGrabConstants();
     public Drive(HardwareMap hardwareMap){
         super(hardwareMap);
@@ -44,6 +47,8 @@ public class Drive extends Follower{
         autoXMovePIDF = new PIDFController(AutoGrabConstants.AutoMoveDrivePIDFCoefficients);
         voltageSensor = hardwareMap.voltageSensor.iterator().next();
         touchFront = hardwareMap.get(TouchSensor.class, "touchFront");
+        OTOSLocalizer otos = new OTOSLocalizer(hardwareMap);
+        localizer2 = new PoseUpdater(hardwareMap, new OTOSLocalizer(hardwareMap));
     }
 
     public Action FollowPath(Path path, boolean holdEnd){
@@ -376,17 +381,14 @@ public class Drive extends Follower{
 
     public Action AutoMoveLoopOnly(Camera cam,Intake intk) {
         return new Action() {
-            double rotation, targetYaw, cam2inch;
+            double  targetYaw;
             double x;
             double y;
-            double tarHeading;
-            Pose endPoint;
             boolean driving = false;
             boolean looping = false;
             boolean wait = false;
             ElapsedTime time = new ElapsedTime();
-            ElapsedTime moveTime = new ElapsedTime();
-            ElapsedTime pathTimeout = new ElapsedTime();  // Added timeout for path following
+            ElapsedTime moveTime = new ElapsedTime();// Added timeout for path following
 
             @Override
             public boolean run(@NonNull TelemetryPacket packet) {
@@ -414,20 +416,23 @@ public class Drive extends Follower{
 //
                 if ((Math.abs(cam.getTargetX() - x) > AutoGrabConstants.objLoopDistance ||
                         Math.abs(cam.getTargetY() - y) > AutoGrabConstants.objLoopDistance) && !driving && moveTime.time()<2.5) {
-
-
-                    // Calculate movement vectors
-                    autoXMovePIDF.updateError(320-cam.getObjX());
-                    autoYMovePIDF.updateError(180-cam.getObjY());
-
-                    packet.put("obj x", x);
-                    packet.put("obj y", y);
-
                     double headingChange = cam.angleCor(1 * (targetYaw - poseUpdater.getPose().getHeading()));
                     if((x == -1 && y == -1)){
                         setTeleOpMovementVectors(0,0,headingChange);
                         return true;
                     }
+                    // Calculate movement vectors
+                    intk.setClawAutoOpen(cam);
+//                    intk.setTwistMatchObjAngle(cam);
+                    autoXMovePIDF.updateError(cam.getTargetX()-cam.getObjX());
+                    autoYMovePIDF.updateError(cam.getTargetY()-cam.getObjY());
+
+
+                    packet.put("obj x", x);
+                    packet.put("obj y", y);
+
+
+
                     // Single call to setTeleOpMovementVectors
                     setTeleOpMovementVectors(MathFunctions.clamp(12*(autoYMovePIDF.runPIDF()/voltageSensor.getVoltage()),-AutoGrabConstants.autoGrabMaxPower,AutoGrabConstants.autoGrabMaxPower), MathFunctions.clamp(12*(autoXMovePIDF.runPIDF()/voltageSensor.getVoltage()),-AutoGrabConstants.autoGrabMaxPower,AutoGrabConstants.autoGrabMaxPower), headingChange);
                     return true;
@@ -484,6 +489,14 @@ public class Drive extends Follower{
         return AutoGrab(cam, intk, lift, false);
     }
 
+    public void TeleOpAssist(double forw, double lat, double rot, Camera cam){
+        double gain = .2;
+        autoXMovePIDF.updateError(cam.getTargetX()-cam.getObjX());
+        autoYMovePIDF.updateError(cam.getTargetY()-cam.getObjY());
+
+        setTeleOpMovementVectors(forw+gain*autoYMovePIDF.runPIDF()*MathFunctions.getSign(forw),lat+gain*autoXMovePIDF.runPIDF()*MathFunctions.getSign(lat),rot);
+    }
+
     public Action AutoGrab(Camera cam, Intake intk, Lifters lift, Boolean teleOp){
         Action tele = new SleepAction(0);
         Action wait = new SleepAction(0);
@@ -504,8 +517,8 @@ public class Drive extends Follower{
                 new SleepAction(.1),
                 new ParallelAction(
 //                        AutoMoveLoop(cam, intk)
-                        AutoMove(cam),
-                        lift.setVertLifterPos(250,1)
+                        AutoMoveLoopOnly(cam, intk)
+//                        lift.setVertLifterPos(250,1)
                 ),
                 new SleepAction(.5),
                 lift.setVertLifterZero(1),

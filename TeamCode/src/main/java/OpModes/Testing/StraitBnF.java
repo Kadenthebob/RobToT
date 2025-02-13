@@ -6,7 +6,11 @@ import com.acmerobotics.roadrunner.ParallelAction;
 import com.acmerobotics.roadrunner.SequentialAction;
 import com.acmerobotics.roadrunner.SleepAction;
 import com.acmerobotics.roadrunner.ftc.Actions;
+import com.pedropathing.localization.Localizer;
+import com.pedropathing.localization.Localizers;
 import com.pedropathing.localization.Pose;
+import com.pedropathing.localization.PoseUpdater;
+import com.pedropathing.localization.localizers.OTOSLocalizer;
 import com.pedropathing.pathgen.BezierLine;
 import com.pedropathing.pathgen.PathChain;
 import com.pedropathing.pathgen.Point;
@@ -66,6 +70,7 @@ public final class StraitBnF extends LinearOpMode {
         follower.setStartingPose(startPose);
 
         telemetryA = new MultipleTelemetry(this.telemetry, FtcDashboard.getInstance().getTelemetry());
+        PoseUpdater pos = new PoseUpdater(hardwareMap, new OTOSLocalizer(hardwareMap));
 
         waitForStart();
         while(opModeIsActive()) {

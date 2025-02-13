@@ -9,15 +9,15 @@ import com.qualcomm.robotcore.hardware.DcMotorSimple;
 @Config
 public class AutoGrabConstants {
     public static CustomPIDFCoefficients AutoMoveDrivePIDFCoefficients = new CustomPIDFCoefficients(
-                0.002,
+                0.0027,
                 0.000,
-                .00006,
+                .0002,
                 0);
 
-    public static double autoGrabOffX = -4;
-    public static double autoGrabOffY = -3.1;
+    public static double autoGrabOffX = 0;
+    public static double autoGrabOffY = 0;
     public static double autoGrabMaxPower = .5;
     public static boolean autoWait = false;
-    public static double objLoopDistance = 150;
+    public static double objLoopDistance = 15;
 
 }
