@@ -415,7 +415,7 @@ public class Drive extends Follower{
                 }
 //
                 if ((Math.abs(cam.getTargetX() - x) > AutoGrabConstants.objLoopDistance ||
-                        Math.abs(cam.getTargetY() - y) > AutoGrabConstants.objLoopDistance) && !driving && moveTime.time()<2.5) {
+                        Math.abs(cam.getTargetY() - y) > AutoGrabConstants.objLoopDistance) && !driving && moveTime.time()<5) {
                     double headingChange = cam.angleCor(1 * (targetYaw - poseUpdater.getPose().getHeading()));
                     if((x == -1 && y == -1)){
                         setTeleOpMovementVectors(0,0,headingChange);

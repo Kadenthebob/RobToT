@@ -31,7 +31,7 @@ public class Lifters {
 
     @Config
     public static class liftParams {
-        public int lifterLimitHigh = 4500;
+        public int lifterLimitHigh = 3500;//4500
         public int lifterLimitLow = 0;
         public double lifterCorCof = .0008;
         public static boolean doLiftEncoderEqualiser = false;
@@ -46,7 +46,7 @@ public class Lifters {
     public static class ServoExtendParams{
         public static double EXTEND_OFFSET = 0;
 
-        public static double EXTEND_DEGREE_LIMIT = 90;//200
+        public static double EXTEND_DEGREE_LIMIT = 110;//200
         public static double EXTEND_DEGREE_MAX = 150;
         public static double EXTEND_POWER_COEFF = 4;
     }

@@ -9,9 +9,9 @@ import com.qualcomm.robotcore.hardware.DcMotorSimple;
 @Config
 public class AutoGrabConstants {
     public static CustomPIDFCoefficients AutoMoveDrivePIDFCoefficients = new CustomPIDFCoefficients(
-                0.0027,
-                0.000,
-                .0002,
+                0.003,
+                0.001,
+                .00015,
                 0);
 
     public static double autoGrabOffX = 0;

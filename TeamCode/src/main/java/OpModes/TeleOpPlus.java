@@ -152,6 +152,8 @@ public class TeleOpPlus extends LinearOpMode {
                 cam.setDetectBoth();
             }else if(gamepad2.b){
                 cam.setDetectColor();
+            }else if(gamepad2.a && ArmAction.size() == 0){
+                ArmAction.add(lift.setVertLifterZero(1));
             }
         }else {
             if (gamepad2.x && ArmAction.size() == 0) {
