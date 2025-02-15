@@ -32,10 +32,10 @@ public final class SixBucketAuto extends LinearOpMode {
 
     private MultipleTelemetry telemetryA;
 
-    Pose startPose = new Pose(7.59375, 96, Math.toRadians(0));
-    Pose grab1 = new Pose(23.5, 121, Math.toRadians(0));
-    Pose grab2 = new Pose(23.5, 130, Math.toRadians(0));
-    Pose grab3 = new Pose(40.5, 125.75, Math.toRadians(80));
+    Pose startPose = new Pose(7.59375, 96, Math.toRadians(-90));
+    Pose grab1 = new Pose(18.75, 120.75, Math.toRadians(0));
+    Pose grab2 = new Pose(18.75, 130, Math.toRadians(0));
+    Pose grab3 = new Pose(23.6, 130.7, Math.toRadians(20));
     Pose grabAuto = new Pose(62.544, 96, Math.toRadians(-90));
     Pose place1 = new Pose(12, 130, Math.toRadians(-45));
     //Pose place2 = new Pose(14.793, 129.207, Math.toRadians(-45));
@@ -54,7 +54,7 @@ public final class SixBucketAuto extends LinearOpMode {
                                 new Point(place1)
                         )
                 )
-                .setLinearHeadingInterpolation(Math.toRadians(0), Math.toRadians(-45))
+                .setLinearHeadingInterpolation(Math.toRadians(-90), Math.toRadians(-45))
                 .build();
 
 
@@ -112,7 +112,7 @@ public final class SixBucketAuto extends LinearOpMode {
                                 new Point(grab3)
                         )
                 )
-                .setLinearHeadingInterpolation(Math.toRadians(-45), Math.toRadians(80))
+                .setLinearHeadingInterpolation(Math.toRadians(-45), Math.toRadians(20))
                 .build();
         placeFourth = follower.pathBuilder()
                 .addPath(
@@ -122,7 +122,7 @@ public final class SixBucketAuto extends LinearOpMode {
                                 new Point(place1)
                         )
                 )
-                .setLinearHeadingInterpolation(Math.toRadians(80), Math.toRadians(-45))
+                .setLinearHeadingInterpolation(Math.toRadians(20), Math.toRadians(-45))
                 .build();
 
         grabPit = follower.pathBuilder()
@@ -200,7 +200,7 @@ public final class SixBucketAuto extends LinearOpMode {
                                                 intk.SetTwistPos(90)
                                         ),
                                         new SequentialAction(
-                                                lift.setVertLifterZero(1),
+                                                lift.setVertLifterPos(0,1),
                                                 follower.waitForPose(grab1)
                                         )
                                 ),
@@ -234,7 +234,7 @@ public final class SixBucketAuto extends LinearOpMode {
 
                                         ),
                                         new SequentialAction(
-                                                lift.setVertLifterZero(1),
+                                                lift.setVertLifterPos(0,1),
                                                 follower.waitForPose(grab2)
                                         )
                                 ),
@@ -265,7 +265,7 @@ public final class SixBucketAuto extends LinearOpMode {
 
                                         ),
                                         new SequentialAction(
-                                                lift.setVertLifterZero(.7),
+                                                lift.setVertLifterPos(0,1),
                                                 follower.waitForPose(grab3)
 
                                         )
