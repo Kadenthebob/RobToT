@@ -20,8 +20,9 @@ public final class SetServoZero extends LinearOpMode {
 
         waitForStart();
         intk.setClawPos(0);
-        intk.setElbowPos(15);
+        intk.setElbowPos(23);
         intk.setTrunkPos(190);
+        intk.setTwistPos(90);
         while(opModeIsActive()){
 
         }

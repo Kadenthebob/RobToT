@@ -32,12 +32,12 @@ public final class SixBucketAuto extends LinearOpMode {
 
     private MultipleTelemetry telemetryA;
 
-    Pose startPose = new Pose(7.59375, 96, Math.toRadians(-90));
-    Pose grab1 = new Pose(18.75, 120.75, Math.toRadians(0));
-    Pose grab2 = new Pose(18.75, 130, Math.toRadians(0));
-    Pose grab3 = new Pose(23.6, 130.7, Math.toRadians(20));
+    Pose startPose = new Pose(7.59375, 96, Math.toRadians(0));
+    Pose grab1 = new Pose(18.75, 124, Math.toRadians(0));
+    Pose grab2 = new Pose(18.75, 134, Math.toRadians(0));
+    Pose grab3 = new Pose(22.5, 134, Math.toRadians(20));
     Pose grabAuto = new Pose(62.544, 96, Math.toRadians(-90));
-    Pose place1 = new Pose(12, 130, Math.toRadians(-45));
+    Pose place1 = new Pose(13, 131,Math.toRadians(-45));
     //Pose place2 = new Pose(14.793, 129.207, Math.toRadians(-45));
 
 
@@ -50,11 +50,12 @@ public final class SixBucketAuto extends LinearOpMode {
                         // Line 1
                         new BezierCurve(
                                 new Point(startPose),
-                                new Point(20.000, 110.000, Point.CARTESIAN),
+                                new Point(23.000, 120.000, Point.CARTESIAN),
                                 new Point(place1)
                         )
                 )
-                .setLinearHeadingInterpolation(Math.toRadians(-90), Math.toRadians(-45))
+                .setLinearHeadingInterpolation(Math.toRadians(0), Math.toRadians(-45))
+                .setZeroPowerAccelerationMultiplier(3)
                 .build();
 
 
@@ -74,8 +75,9 @@ public final class SixBucketAuto extends LinearOpMode {
         placeSecond = follower.pathBuilder()
                 .addPath(
                         // Line 3
-                        new BezierLine(
+                        new BezierCurve(
                                 new Point(grab1),
+                                new Point(20,130,Point.CARTESIAN),
                                 new Point(place1)
                         )
                 )
@@ -165,23 +167,24 @@ public final class SixBucketAuto extends LinearOpMode {
 
         telemetryA = new MultipleTelemetry(this.telemetry, FtcDashboard.getInstance().getTelemetry());
 
+        lift.setHorLifterPos(0);
+        intk.setClawPos(0);
+        intk.setTwistPos(90);
+        //Aproach Pole
+        intk.setTrunkPos(90);
+        intk.setElbowPos(285);
         waitForStart();
+
         Actions.runBlocking(
                 //Follower Class loop
                 new ParallelAction(
                         follower.Update(telemetryA),
                         //main sequential
                         new SequentialAction(
-                                lift.SetHorLifterPos(0),
-                                intk.SetClawClose(),
-                                intk.SetTwistPos(90),
-                                //Aproach Pole
-                                intk.SetTrunkPos(90),
-                                intk.SetElbowPos(285),
                                 new ParallelAction(
                                         follower.FollowPath(placeFirst,true),
                                         new SequentialAction(
-                                                lift.setVertLifterPos(4050,1),
+                                                lift.setVertLifterPos(3400,1),
                                                 intk.SetTrunkPos(60),
                                                 intk.SetElbowPos(300),
                                                 new SleepAction(.5),
@@ -194,19 +197,19 @@ public final class SixBucketAuto extends LinearOpMode {
                                 new ParallelAction(
                                         follower.FollowPath(grabSecond,true),
                                         new SequentialAction(
-                                                lift.SetHorLifterPos(90),
+                                                lift.SetHorLifterPos(105),
                                                 intk.SetTrunkPit(),
                                                 intk.SetClawOpen(),
                                                 intk.SetTwistPos(90)
                                         ),
                                         new SequentialAction(
-                                                lift.setVertLifterPos(0,1),
+                                                lift.setVertLifterZero(1),
                                                 follower.waitForPose(grab1)
                                         )
                                 ),
-                                new SleepAction(.65),
+                                new SleepAction(.3),
                                 intk.SetClawClose(),
-                                new SleepAction(.5),
+                                new SleepAction(.2),
                                 lift.SetHorLifterPos(0),
                                 intk.SetTrunkPos(90),
                                 intk.SetElbowPos(285),
@@ -214,7 +217,7 @@ public final class SixBucketAuto extends LinearOpMode {
                                 new ParallelAction(
                                         follower.FollowPath(placeSecond,true),
                                         new SequentialAction(
-                                                lift.setVertLifterPos(4050,1),
+                                                lift.setVertLifterPos(3400,1),
                                                 intk.SetTrunkPos(60),
                                                 intk.SetElbowPos(300),
                                                 new SleepAction(.5),
@@ -227,19 +230,20 @@ public final class SixBucketAuto extends LinearOpMode {
                                 new ParallelAction(
                                         follower.FollowPath(grabThird,true),
                                         new SequentialAction(
-                                                lift.SetHorLifterPos(90),
+                                                lift.SetHorLifterPos(105),
                                                 intk.SetTrunkPit(),
                                                 intk.SetClawOpen(),
                                                 intk.SetTwistPos(90)
 
                                         ),
                                         new SequentialAction(
-                                                lift.setVertLifterPos(0,1),
+                                                lift.setVertLifterZero(1),
                                                 follower.waitForPose(grab2)
                                         )
                                 ),
+                                new SleepAction(.3),
                                 intk.SetClawClose(),
-                                new SleepAction(.5),
+                                new SleepAction(.2),
                                 lift.SetHorLifterPos(0),
                                 intk.SetTrunkPos(90),
                                 intk.SetElbowPos(285),
@@ -247,7 +251,7 @@ public final class SixBucketAuto extends LinearOpMode {
                                 new ParallelAction(
                                         follower.FollowPath(placeThird,true),
                                         new SequentialAction(
-                                                lift.setVertLifterPos(4050,1),
+                                                lift.setVertLifterPos(3400,1),
                                                 intk.SetTrunkPos(60),
                                                 intk.SetElbowPos(300),
                                                 new SleepAction(.5),
@@ -259,19 +263,22 @@ public final class SixBucketAuto extends LinearOpMode {
                                 new ParallelAction(
                                         follower.FollowPath(grabFourth,true),
                                         new SequentialAction(
+                                                lift.SetHorLifterPos(80),
                                                 intk.SetTrunkPit(),
-                                                lift.SetHorLifterPos(40),
+                                                intk.SetTwistPos(110),
                                                 intk.SetClawOpen()
+
 
                                         ),
                                         new SequentialAction(
-                                                lift.setVertLifterPos(0,1),
+                                                lift.setVertLifterZero(1),
                                                 follower.waitForPose(grab3)
 
                                         )
                                 ),
+                                new SleepAction(.3),
                                 intk.SetClawClose(),
-                                new SleepAction(.15),
+                                new SleepAction(.2),
                                 lift.SetHorLifterPos(0),
                                 intk.SetTrunkPos(90),
                                 intk.SetElbowPos(285),
@@ -279,7 +286,7 @@ public final class SixBucketAuto extends LinearOpMode {
                                 new ParallelAction(
                                         follower.FollowPath(placeFourth,true),
                                         new SequentialAction(
-                                                lift.setVertLifterPos(4050,1),
+                                                lift.setVertLifterPos(3400,1),
                                                 intk.SetTrunkPos(60),
                                                 intk.SetElbowPos(300),
                                                 new SleepAction(.5),
@@ -292,20 +299,27 @@ public final class SixBucketAuto extends LinearOpMode {
                                 new ParallelAction(
                                         follower.FollowPath(grabPit,true),
                                         new SequentialAction(
-                                                lift.SetHorLifterPos(90),
+                                                lift.SetHorLifterPos(110),
                                                 intk.SetTrunkPit(),
                                                 intk.SetClawOpen(),
-                                                intk.SetTwistPos(0)
-
+                                                intk.SetElbowPos(23),
+                                                intk.SetTrunkPos(175),
+                                                intk.SetTwistPos(90)
 
                                         ),
                                         new SequentialAction(
-                                                lift.setVertLifterPos(700,1),
+                                                lift.setVertLifterPos(800,1),
                                                 follower.waitForPose(grabAuto)
                                         )
                                 ),
+
                                 follower.AutoGrab(cam,intk,lift),
-                                follower.goToPose(grabAuto),
+                                intk.SetElbowPos(110),
+                                new ParallelAction(
+                                        lift.setVertLifterPos(300,1),
+                                        follower.goToPose(grabAuto)
+                                ),
+
                                 follower.waitForPose(grabAuto),
                                 lift.SetHorLifterPos(0),
                                 intk.SetTrunkPos(90),
@@ -313,7 +327,7 @@ public final class SixBucketAuto extends LinearOpMode {
                                 new ParallelAction(
                                         follower.FollowPath(placePit,true),
                                         new SequentialAction(
-                                                lift.setVertLifterPos(4050,1),
+                                                lift.setVertLifterPos(3400,1),
                                                 intk.SetTrunkPos(60),
                                                 intk.SetElbowPos(300),
                                                 new SleepAction(.5),

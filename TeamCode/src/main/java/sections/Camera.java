@@ -35,19 +35,17 @@ public class Camera {
         public static boolean TRACK_YELLOW = true;
         public static boolean TRACK_TARGET_COLOR = true;
 
-        public static int OBJ_TARGET_X = 240;
-        public static int OBJ_TARGET_Y = 320;
-        public static int OBJ_MIN_SIZE = 1500;
-
-        public static int CAM_HEIGHT = 480;
-        public static int CAM_WIDTH = 640;
+        public static int CAM_HEIGHT = 240;
+        public static int CAM_WIDTH = 320;
         public static boolean redTeam = true;
-
+        public static int OBJ_TARGET_X = CAM_HEIGHT/2;
+        public static int OBJ_TARGET_Y = CAM_WIDTH/2;
+        public static int OBJ_MIN_SIZE = 1500;
         public static double SURROUNDED_DISTANCE = 3;//in inches
 
         public static double FOCUS_LENGTH = 0;
         public static double CAM_EXPOSURE = 13000;
-        public static int CAM_GAIN = 75;
+        public static int CAM_GAIN = 60;
 
         public static boolean useHomography = false;
         public static boolean doWarp = false;
@@ -185,6 +183,7 @@ public class Camera {
                 cam.startStreaming(PARAMS.CAM_WIDTH, PARAMS.CAM_HEIGHT, OpenCvCameraRotation.UPSIDE_DOWN, OpenCvWebcam.StreamFormat.MJPEG);
                 cam.getFocusControl().setMode(FocusControl.Mode.Fixed);
                 cam.getFocusControl().setFocusLength(CamParams.FOCUS_LENGTH);
+                cam.getExposureControl().setMode(ExposureControl.Mode.Manual);
                 cam.getExposureControl().setExposure((long)CamParams.CAM_EXPOSURE, TimeUnit.MICROSECONDS);
                 cam.getGainControl().setGain(CamParams.CAM_GAIN);
 
@@ -294,7 +293,7 @@ public class Camera {
                     RotatedRect rect = Imgproc.minAreaRect(new MatOfPoint2f(contour.toArray()));
 
                     double rat = Math.min(rect.size.height, rect.size.width)/Math.max(rect.size.height, rect.size.width);
-                    if(Math.abs(rat-wlratio)/wlratio<.3){
+                    if(Math.abs(rat-wlratio)/wlratio<.5){
                         minRect.add(rect);
                     }
 

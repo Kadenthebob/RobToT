@@ -262,9 +262,9 @@ public class Intake {
         return new SequentialAction(
                 SetTwistPos(0),
                 SetElbowPos(100),
-                SetTrunkPos(200),
+                SetTrunkPos(175),
                 new SleepAction(1),
-                SetElbowPos(15)
+                SetElbowPos(23)
         );
     }
 

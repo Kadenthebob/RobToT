@@ -422,7 +422,6 @@ public class Drive extends Follower{
                         return true;
                     }
                     // Calculate movement vectors
-                    intk.setClawAutoOpen(cam);
 //                    intk.setTwistMatchObjAngle(cam);
                     autoXMovePIDF.updateError(cam.getTargetX()-cam.getObjX());
                     autoYMovePIDF.updateError(cam.getTargetY()-cam.getObjY());
@@ -438,7 +437,7 @@ public class Drive extends Follower{
                     return true;
 
                 }
-                setTeleOpMovementVectors(0,0,0);
+                holdPoint(getPose());
                 return false;
             }
         };
@@ -507,22 +506,17 @@ public class Drive extends Follower{
             wait = WaitForDetect(cam);
         }
         return new SequentialAction(
-                lift.setVertLifterPos(700,1),
-                intk.SetElbowPos(15),
+//                lift.setVertLifterPos(700,1),
+                intk.SetElbowPos(23),
                 intk.autoOverideOn(),
-                intk.SetClawAutoOpen(cam),
-                intk.SetTwistMatchObjAngle(cam),
+                intk.SetClawOpen(),
                 wait,
-                AutoMoveLoopOnly(cam,intk),
-                new SleepAction(.1),
                 new ParallelAction(
-//                        AutoMoveLoop(cam, intk)
                         AutoMoveLoopOnly(cam, intk)
-//                        lift.setVertLifterPos(250,1)
                 ),
-                new SleepAction(.5),
+                intk.SetTwistMatchObjAngle(cam, true),
                 lift.setVertLifterZero(1),
-                new SleepAction(.075),
+                new SleepAction(.3),
                 intk.SetClawAutoClose(cam),
                 intk.autoOverideOff(),
                 tele
