@@ -33,10 +33,10 @@ public final class SixBucketAuto extends LinearOpMode {
     private MultipleTelemetry telemetryA;
 
     Pose startPose = new Pose(7.59375, 96, Math.toRadians(0));
-    Pose grab1 = new Pose(18.75, 124, Math.toRadians(0));
-    Pose grab2 = new Pose(18.75, 134, Math.toRadians(0));
+    Pose grab1 = new Pose(18.75, 122, Math.toRadians(0));
+    Pose grab2 = new Pose(18.75, 133, Math.toRadians(0));
     Pose grab3 = new Pose(22.5, 134, Math.toRadians(20));
-    Pose grabAuto = new Pose(62.544, 96, Math.toRadians(-90));
+    Pose grabAuto = new Pose(62.544, 104, Math.toRadians(-90));
     Pose place1 = new Pose(13, 131,Math.toRadians(-45));
     //Pose place2 = new Pose(14.793, 129.207, Math.toRadians(-45));
 
@@ -163,7 +163,7 @@ public final class SixBucketAuto extends LinearOpMode {
 
         Lifters lift = new Lifters(hardwareMap);
         Intake intk = new Intake(hardwareMap);
-        Camera cam = new Camera(hardwareMap,true);
+//        Camera cam = new Camera(hardwareMap,true);
 
         telemetryA = new MultipleTelemetry(this.telemetry, FtcDashboard.getInstance().getTelemetry());
 
@@ -203,7 +203,7 @@ public final class SixBucketAuto extends LinearOpMode {
                                                 intk.SetTwistPos(90)
                                         ),
                                         new SequentialAction(
-                                                lift.setVertLifterZero(1),
+                                                lift.setVertLifterPos(100,1),
                                                 follower.waitForPose(grab1)
                                         )
                                 ),
@@ -237,7 +237,7 @@ public final class SixBucketAuto extends LinearOpMode {
 
                                         ),
                                         new SequentialAction(
-                                                lift.setVertLifterZero(1),
+                                                lift.setVertLifterPos(100,1),
                                                 follower.waitForPose(grab2)
                                         )
                                 ),
@@ -263,15 +263,16 @@ public final class SixBucketAuto extends LinearOpMode {
                                 new ParallelAction(
                                         follower.FollowPath(grabFourth,true),
                                         new SequentialAction(
-                                                lift.SetHorLifterPos(80),
+                                                lift.SetHorLifterPos(85),
                                                 intk.SetTrunkPit(),
                                                 intk.SetTwistPos(110),
                                                 intk.SetClawOpen()
 
 
+
                                         ),
                                         new SequentialAction(
-                                                lift.setVertLifterZero(1),
+                                                lift.setVertLifterPos(100,1),
                                                 follower.waitForPose(grab3)
 
                                         )
@@ -313,7 +314,8 @@ public final class SixBucketAuto extends LinearOpMode {
                                         )
                                 ),
 
-                                follower.AutoGrab(cam,intk,lift),
+//                                follower.AutoGrab(cam,intk,lift),
+                                lift.SetHorLifterPos(0),
                                 intk.SetElbowPos(110),
                                 new ParallelAction(
                                         lift.setVertLifterPos(300,1),

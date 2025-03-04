@@ -35,7 +35,7 @@ public class TeleOpPlus extends LinearOpMode {
     Lifters lift;
     Intake intk;
     Drive follower;
-    Camera cam;
+//    Camera cam;
     double xMov, yMov = 0;
     boolean holdingA = false;
     boolean holdingY = false;
@@ -44,7 +44,7 @@ public class TeleOpPlus extends LinearOpMode {
     public void runOpMode() throws InterruptedException{
         lift = new Lifters(hardwareMap);
         intk = new Intake(hardwareMap);
-        cam = new Camera(hardwareMap,true);
+//        cam = new Camera(hardwareMap,true);
         Constants.setConstants(FConstants.class, LConstants.class);
         follower = new Drive(hardwareMap);
         follower.poseUpdater.resetIMU();
@@ -98,9 +98,9 @@ public class TeleOpPlus extends LinearOpMode {
 
         //auto grab code
 
-        if(gamepad1.y&&AutoGrabAction.size()==0){
-            runningActions.add(follower.AutoGrab(cam,intk,lift,true));
-        }
+//        if(gamepad1.y&&AutoGrabAction.size()==0){
+//            runningActions.add(follower.AutoGrab(cam,intk,lift,true));
+//        }
         if(gamepad1.b&&AutoGrabAction.size()!=0){
             runningActions.set(0,intk.autoOverideOff());
             follower.startTeleopDrive();
@@ -126,9 +126,9 @@ public class TeleOpPlus extends LinearOpMode {
             brakeCoeff = .3;
         }else brakeCoeff = 1-gamepad1.right_trigger;
 
-        if(!follower.getTeleOpOveride(cam)) {
+//        if(!follower.getTeleOpOveride(cam)) {
             follower.setTeleOpMovementVectors((-gamepad1.left_stick_y + yMov) * brakeCoeff, (-gamepad1.left_stick_x + xMov) * brakeCoeff, -gamepad1.right_stick_x, true);
-        }
+//        }
         follower.update();
 
 //        intk.setTrunkPower(-gamepad2.left_stick_y);
@@ -146,18 +146,18 @@ public class TeleOpPlus extends LinearOpMode {
         //arm actions
         //camera adjuster
         if(gamepad2.back){
-            if(gamepad2.x){
-                cam.setDetectYellow();
-            }else if(gamepad2.y){
-                cam.setDetectBoth();
-            }else if(gamepad2.b){
-                cam.setDetectColor();
-            }else if(gamepad2.a && ArmAction.size() == 0){
+//            if(gamepad2.x){
+//                cam.setDetectYellow();
+//            }else if(gamepad2.y){
+//                cam.setDetectBoth();
+//            }else if(gamepad2.b){
+//                cam.setDetectColor();
+            if(gamepad2.a && ArmAction.size() == 0){
                 ArmAction.add(lift.setVertLifterZero(1));
             }
         }else {
             if (gamepad2.x && ArmAction.size() == 0) {
-                ArmAction.add(new ParallelAction(intk.SetTrunkHoop(), lift.setVertLifterPos(4050, 1)));
+                ArmAction.add(new ParallelAction(intk.SetTrunkHoop(), lift.setVertLifterPos(3400, 1)));
             } else if (gamepad2.dpad_up && ArmAction.size() == 0) {
                 ArmAction.add(new ParallelAction(intk.SetTrunkPit(), lift.setVertLifterPos(700, 1)));
             } else if (gamepad2.dpad_down && ArmAction.size() == 0) {
@@ -208,7 +208,7 @@ public class TeleOpPlus extends LinearOpMode {
 
 
 
-        telemetry.addData("Cam Detect Setting", cam.getDetectSettings());
+//        telemetry.addData("Cam Detect Setting", cam.getDetectSettings());
         telemetry.addLine();
         telemetry.addLine();
         telemetry.addData("Driver Overide: ", driverOveride);  //print out data
@@ -222,7 +222,7 @@ public class TeleOpPlus extends LinearOpMode {
         telemetry.addData("extendoL Pos: ", lift.horLifterL.getPosition());
         telemetry.addData("extendoR Pos: ", lift.horLifterR.getPosition());
         telemetry.addData("arm: ", intk.arm.getPosition());
-        telemetry.addData("focus",cam.cam.getFocusControl().getMinFocusLength());
+//        telemetry.addData("focus",cam.cam.getFocusControl().getMinFocusLength());
 
         telemetry.update();
     }

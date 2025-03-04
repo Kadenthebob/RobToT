@@ -45,7 +45,7 @@ public class Camera {
 
         public static double FOCUS_LENGTH = 0;
         public static double CAM_EXPOSURE = 13000;
-        public static int CAM_GAIN = 60;
+        public static int CAM_GAIN = 0;
 
         public static boolean useHomography = false;
         public static boolean doWarp = false;
