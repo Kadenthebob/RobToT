@@ -52,7 +52,7 @@ public final class AutoGrabTest extends LinearOpMode {
     @Override
     public void runOpMode() throws InterruptedException {
 
-        Constants.setConstants(FConstants.class, LConstants.class);
+
         follower = new Drive(hardwareMap);
         follower.poseUpdater.resetIMU();
         buildPaths();

@@ -25,7 +25,8 @@ import com.pedropathing.pathgen.MathFunctions;
 import com.pedropathing.util.PIDFController;
 
 import pedroPathing.constants.AutoGrabConstants;
-
+import pedroPathing.constants.FConstants;
+import pedroPathing.constants.LConstants;
 
 
 public class Drive extends Follower{
@@ -42,7 +43,7 @@ public class Drive extends Follower{
     PoseUpdater localizer2;
     AutoGrabConstants FollowerConstansts = new AutoGrabConstants();
     public Drive(HardwareMap hardwareMap){
-        super(hardwareMap);
+        super(hardwareMap, FConstants.class, LConstants.class);
         autoYMovePIDF = new PIDFController(AutoGrabConstants.AutoMoveDrivePIDFCoefficients);
         autoXMovePIDF = new PIDFController(AutoGrabConstants.AutoMoveDrivePIDFCoefficients);
         voltageSensor = hardwareMap.voltageSensor.iterator().next();

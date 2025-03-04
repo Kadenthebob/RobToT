@@ -45,7 +45,6 @@ public class TeleOpPlus extends LinearOpMode {
         lift = new Lifters(hardwareMap);
         intk = new Intake(hardwareMap);
 //        cam = new Camera(hardwareMap,true);
-        Constants.setConstants(FConstants.class, LConstants.class);
         follower = new Drive(hardwareMap);
         follower.poseUpdater.resetIMU();
         follower.setStartingPose(new Pose(0,0,0));
