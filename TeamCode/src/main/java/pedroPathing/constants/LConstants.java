@@ -20,8 +20,8 @@ public class LConstants {
         OTOSConstants.linearScalar = 1;
         OTOSConstants.angularScalar = 1;
 
-        PinpointConstants.forwardY = 6.125;
-        PinpointConstants.strafeX = -5.551;
+        PinpointConstants.forwardY = -11.25/2-1.5;
+        PinpointConstants.strafeX = -6;
         PinpointConstants.distanceUnit = DistanceUnit.INCH;
         PinpointConstants.hardwareMapName = "pinpoint";
         PinpointConstants.useYawScalar = false;

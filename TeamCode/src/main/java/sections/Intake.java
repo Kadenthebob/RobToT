@@ -8,6 +8,7 @@ import com.acmerobotics.roadrunner.Action;
 import com.acmerobotics.roadrunner.ParallelAction;
 import com.acmerobotics.roadrunner.SequentialAction;
 import com.acmerobotics.roadrunner.SleepAction;
+import com.pedropathing.pathgen.MathFunctions;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.PwmControl;
@@ -38,10 +39,27 @@ public class Intake {
         public static double TWIST_OFFSET = 90;
 
         public static double TWIST_DEGREE_LIMIT = 180;//200
-        public static double TWIST_DEGREE_MAX = 360*5;
+        public static double TWIST_DEGREE_MAX = 300/2;
         public static double TWIST_POWER_COEFF = 4;
     }
+
+    @Config
+    public static class ServoIntakeDiffyParams {
+        public static double DIFFY_DEGREE_MAX = 150;
+        public static double TWIST_OFFSET = 90;
+
+        public static double TWIST_DEGREE_LIMIT = 180;//200
+        public static double TWIST_POWER_COEFF = 4;
+
+        public static double WRIST_DEGREE_LIMIT = 20;//200
+
+        public static double WRIST_POWER_COEFF = 4;
+    }
+
     double trunkPos = 0;
+
+    double avgDiffyPos = 0;
+    double wristPos = 0;
     double twistPos = 0;
     double armPos = 0;
     double elbowOffest = 0;
@@ -52,45 +70,67 @@ public class Intake {
 
     ServoTwistParams twistParams = new ServoTwistParams();
 
+    ServoIntakeDiffyParams diffyParams = new ServoIntakeDiffyParams();
+
     Params PARAMS = new Params();
     CRServo intakeR, intakeL;
-    public ServoImplEx trunkR, trunkL, twist, arm, claw;
+    public ServoImplEx trunkR, trunkL, claw, inDiffyR, inDiffyL;
     public Intake(HardwareMap hardwareMap){
-        claw = hardwareMap.get(ServoImplEx.class,"Claw");
-        arm = hardwareMap.get(ServoImplEx.class,"elbow");
-        trunkR = hardwareMap.get(ServoImplEx.class,"trunkR");
-        trunkL = hardwareMap.get(ServoImplEx.class,"trunkL");
-        twist = hardwareMap.get(ServoImplEx.class,"twist");
+        claw = hardwareMap.get(ServoImplEx.class,"inClaw");
+        claw.setPwmRange(Params.pwmRange);
+
+        trunkR = hardwareMap.get(ServoImplEx.class,"inTrunkR");
         trunkR.setDirection(Servo.Direction.FORWARD);
+        trunkR.setPwmRange(Params.pwmRange);
+
+        trunkL = hardwareMap.get(ServoImplEx.class,"inTrunkL");
         trunkL.setDirection(Servo.Direction.REVERSE);
-        twist.setDirection(Servo.Direction.REVERSE);
-        twist.setPwmRange(Params.pwmRange);
-    }
-    public void intakeIn(){
-        intakeR.setPower(PARAMS.intakeSpeed);
-        intakeL.setPower(PARAMS.intakeSpeed);
+        trunkL.setPwmRange(Params.pwmRange);
+
+        inDiffyR = hardwareMap.get(ServoImplEx.class,"inDiffyR");
+        inDiffyR.setPwmRange(Params.pwmRange);
+        inDiffyR.setDirection(Servo.Direction.FORWARD);
+
+        inDiffyL = hardwareMap.get(ServoImplEx.class,"inDiffyL");
+        inDiffyL.setPwmRange(Params.pwmRange);
+        inDiffyL.setDirection(Servo.Direction.REVERSE);
+
     }
 
-    public void intakeOut(){
-        intakeR.setPower(-PARAMS.intakeSpeed);
-        intakeL.setPower(-PARAMS.intakeSpeed);
+    public void updateDiffyPos(){
+        double diffyRPos = inDiffyR.getPosition()*diffyParams.DIFFY_DEGREE_MAX;
+        double diffyLPos = inDiffyL.getPosition()*diffyParams.DIFFY_DEGREE_MAX;
+
+        avgDiffyPos = (diffyLPos + diffyRPos)/2;
+        twistPos = (diffyRPos-avgDiffyPos)*2;
+        wristPos = diffyParams.TWIST_OFFSET - avgDiffyPos;
+    }
+    public void setDiffyWristPos(double pos){
+        updateDiffyPos();
+        pos = MathFunctions.clamp(pos,0,diffyParams.WRIST_DEGREE_LIMIT);
+        setDiffyPos(pos, twistPos);
     }
 
-    public void intakeOff(){
-        intakeR.setPower(0);
-        intakeL.setPower(0);
+    public void setDiffyTwistPos(double pos){
+        updateDiffyPos();
+        pos = MathFunctions.clamp(pos,0,diffyParams.TWIST_DEGREE_LIMIT);
+        setDiffyPos(wristPos, pos);
     }
 
-    //Auto Actions
-    public Action IntakeIn(){
-        return new Action(){
-            @Override
-            public boolean run(@NonNull TelemetryPacket packet) {
-                intakeIn();
-                return false;
-            }
-        };
+    private void setDiffyPos(double wrist, double twist){
+        wrist/=diffyParams.DIFFY_DEGREE_MAX;
+        twist/=diffyParams.DIFFY_DEGREE_MAX;
+        twist/=2;
+        double off = diffyParams.TWIST_OFFSET/diffyParams.DIFFY_DEGREE_MAX;
+        inDiffyR.setPosition(wrist+twist+off);
+        inDiffyL.setPosition(wrist-twist+off);
     }
+
+    public void diffyReset(){
+        inDiffyR.setPosition(90/diffyParams.DIFFY_DEGREE_MAX);
+        inDiffyL.setPosition(90/diffyParams.DIFFY_DEGREE_MAX);
+    }
+
     public void setClawPos(double degree){
         double pos = Math.max(Math.min(degree,PARAMS.clawMaxDegree),0); //sets a limit to what you can set the servo position to go to
 
@@ -169,48 +209,28 @@ public class Intake {
             clawOpen = true;
         }
     }
-
-    public Action IntakeOut(){
-        return new Action(){
-            @Override
-            public boolean run(@NonNull TelemetryPacket packet) {
-                intakeOut();
-                return false;
-            }
-        };
-    }
-    public Action IntakeOff(){
-        return new Action(){
-            @Override
-            public boolean run(@NonNull TelemetryPacket packet) {
-                intakeOff();
-                return false;
-            }
-        };
-    }
-
-    public void setTrunkPit(){
-        double degree = 190;
-        double pos = Math.max(Math.min(degree,PARAMS.trunkMaxDegree),0); //sets a limit to what you can set the servo position to go to
-
-        pos/=PARAMS.trunkServoMaxTurn; //converts from degrees(0-360) to servo position(0-1)
-        elbowOffest = 0;
-        setElbowPos(100);
-        setTwistPos(90);
-        trunkR.setPosition(pos+(trunkOffset/PARAMS.trunkServoMaxTurn));
-        trunkL.setPosition(pos+(trunkOffset/PARAMS.trunkServoMaxTurn));
-    }
-    public void setTrunkZero(){
-        double degree = 0;
-        double pos = Math.max(Math.min(degree,PARAMS.trunkMaxDegree),0); //sets a limit to what you can set the servo position to go to
-
-        pos/=PARAMS.trunkServoMaxTurn; //converts from degrees(0-360) to servo position(0-1)
-        elbowOffest = 0;
-        setElbowPos(100);
-        setTwistPos(90);
-        trunkR.setPosition(pos+(trunkOffset/PARAMS.trunkServoMaxTurn));
-        trunkL.setPosition(pos+(trunkOffset/PARAMS.trunkServoMaxTurn));
-    }
+//    public void setTrunkPit(){
+//        double degree = 190;
+//        double pos = Math.max(Math.min(degree,PARAMS.trunkMaxDegree),0); //sets a limit to what you can set the servo position to go to
+//
+//        pos/=PARAMS.trunkServoMaxTurn; //converts from degrees(0-360) to servo position(0-1)
+//        elbowOffest = 0;
+//        setElbowPos(100);
+//        setTwistPos(90);
+//        trunkR.setPosition(pos+(trunkOffset/PARAMS.trunkServoMaxTurn));
+//        trunkL.setPosition(pos+(trunkOffset/PARAMS.trunkServoMaxTurn));
+//    }
+//    public void setTrunkZero(){
+//        double degree = 0;
+//        double pos = Math.max(Math.min(degree,PARAMS.trunkMaxDegree),0); //sets a limit to what you can set the servo position to go to
+//
+//        pos/=PARAMS.trunkServoMaxTurn; //converts from degrees(0-360) to servo position(0-1)
+//        elbowOffest = 0;
+//        setElbowPos(100);
+//        setTwistPos(90);
+//        trunkR.setPosition(pos+(trunkOffset/PARAMS.trunkServoMaxTurn));
+//        trunkL.setPosition(pos+(trunkOffset/PARAMS.trunkServoMaxTurn));
+//    }
 
     public void setTrunkWall(){
         double degree = 10;
@@ -258,117 +278,85 @@ public class Intake {
     }
 
 
-    public Action SetTrunkPit(){
-        return new SequentialAction(
-                SetTwistPos(0),
-                SetElbowPos(100),
-                SetTrunkPos(175),
-                new SleepAction(1),
-                SetElbowPos(23)
-        );
-    }
-
-    public Action SetTrunkWall(){
-        return new SequentialAction(
-                SetTwistPos(0),
-                SetElbowPos(100),
-                SetTrunkPos(20),
-                new SleepAction(.5),
-                SetElbowPos(300),
-                new SleepAction(.8),
-                SetTwistPos(90)
-        );
-    }
-
-    public Action SetTrunkHoop(){
-        return new SequentialAction(
-                SetTwistPos(90),
-                SetElbowPos(100),
-                SetTrunkPos(60),
-                new SleepAction(.5),
-                SetElbowPos(300),
-                new SleepAction(.8),
-                SetTwistPos(90)
-        );
-    }
-
-    public Action SetSpec(Lifters lift){
-        return new SequentialAction(
-                SetTwistPos(90),
-                SetElbowPos(115),
-                SetTrunkPos(100),
-                lift.setVertLifterPos(1200,1)
-        );
-    }
-
-    public Action SetSpecRelease(Lifters lift){
-        return new SequentialAction(
-                lift.setVertLifterPos(1900,1),
-                SetClawOpen()
-        );
-    }
-
-    public Action SpecHold(Lifters lift){
-        return new ParallelAction(
-                lift.setVertLifterPos(1180,1),
-                SetTwistPos(90),
-                SetElbowPos(157.8),
-                SetTrunkPos(153.4)
-
-        );
-    }
-
-    public Action SpecRelease(Lifters lift){
-        return new SequentialAction(
-                SetTwistPos(90),
-                SetElbowPos(184.2),
-                SetTrunkPos(97.2)
-
-        );
-    }
-
-    public void setElbowPos(double degree){
-        double pos = Math.max(Math.min(degree,PARAMS.armMaxDegree),0); //sets a limit to what you can set the servo position to go to
-
-        pos/=PARAMS.armServoMaxTurn; //converts from degrees(0-360) to servo position(0-1)
-
-        arm.setPosition(pos);
-    }
-
-    public void setElbowPower(double pow){
-        if(!autoOveride) {
-            armPos = PARAMS.armServoMaxTurn * (arm.getPosition()) - elbowOffest;
-            setElbowPos(armPos + pow * PARAMS.armPowerCoeff);
-        }
-    }
-
-    public Action SetElbowPos(double degree){
-        return new Action(){
-            @Override
-            public boolean run(@NonNull TelemetryPacket packet) {
-                setElbowPos(degree);
-                return false;
-            }
-        };
-    }
-
-    public void setTwistPos(double degree){
-        double pos = Math.max(Math.min(degree,twistParams.TWIST_DEGREE_LIMIT),0); //sets a limit to what you can set the servo position to go to
-
-        pos/=twistParams.TWIST_DEGREE_MAX; //converts from degrees(0-360) to servo position(0-1)
-
-        twist.setPosition(pos+(twistParams.TWIST_OFFSET/twistParams.TWIST_DEGREE_MAX));
-    }
-
-    public void setTwistPower(double pow){
-        if(!autoOveride) {
-            twistPos = twist.getPosition() * twistParams.TWIST_DEGREE_MAX - twistParams.TWIST_OFFSET;
-            setTwistPos(twistPos + pow * twistParams.TWIST_POWER_COEFF);
-        }
-    }
+//    public Action SetTrunkPit(){
+//        return new SequentialAction(
+//                SetTwistPos(0),
+//                SetElbowPos(100),
+//                SetTrunkPos(175),
+//                new SleepAction(1),
+//                SetElbowPos(23)
+//        );
+//    }
+//
+//    public Action SetTrunkWall(){
+//        return new SequentialAction(
+//                SetTwistPos(0),
+//                SetElbowPos(100),
+//                SetTrunkPos(20),
+//                new SleepAction(.5),
+//                SetElbowPos(300),
+//                new SleepAction(.8),
+//                SetTwistPos(90)
+//        );
+//    }
+//
+//    public Action SetTrunkHoop(){
+//        return new SequentialAction(
+//                SetTwistPos(90),
+//                SetElbowPos(100),
+//                SetTrunkPos(60),
+//                new SleepAction(.5),
+//                SetElbowPos(300),
+//                new SleepAction(.8),
+//                SetTwistPos(90)
+//        );
+//    }
+//
+//    public Action SetSpec(Lifters lift){
+//        return new SequentialAction(
+//                SetTwistPos(90),
+//                SetElbowPos(115),
+//                SetTrunkPos(100),
+//                lift.setVertLifterPos(1200,1)
+//        );
+//    }
+//
+//    public Action SetSpecRelease(Lifters lift){
+//        return new SequentialAction(
+//                lift.setVertLifterPos(1900,1),
+//                SetClawOpen()
+//        );
+//    }
+//
+//    public Action SpecHold(Lifters lift){
+//        return new ParallelAction(
+//                lift.setVertLifterPos(1180,1),
+//                SetTwistPos(90),
+//                SetElbowPos(157.8),
+//                SetTrunkPos(153.4)
+//
+//        );
+//    }
+//
+//    public Action SpecRelease(Lifters lift){
+//        return new SequentialAction(
+//                SetTwistPos(90),
+//                SetElbowPos(184.2),
+//                SetTrunkPos(97.2)
+//
+//        );
+//    }
+//
+//    public void setTwistPower(double pow){
+//        if(!autoOveride) {
+//            twistPos = twist.getPosition() * twistParams.TWIST_DEGREE_MAX - twistParams.TWIST_OFFSET;
+//            setTwistPos(twistPos + pow * twistParams.TWIST_POWER_COEFF);
+//        }
+//    }
 
     public void setTwistMatchObjAngle(Camera cam,boolean ninetyOffset){
-        double pos = 90-(twist.getPosition() * twistParams.TWIST_DEGREE_MAX - twistParams.TWIST_OFFSET);
+        updateDiffyPos();
+        double pos = -twistPos;
         double off = 0;
         if(!ninetyOffset) off += 90;
         double serv = (180-(cam.getObjRot()+90)+off-pos)%180;
@@ -376,7 +364,7 @@ public class Intake {
         if(serv<0){
             serv+=180;
         }
-        setTwistPos(serv);
+        setDiffyTwistPos(serv);
     }
 
     public void setTwistMatchObjAngle(Camera cam){
@@ -387,7 +375,7 @@ public class Intake {
         return new Action(){
             @Override
             public boolean run(@NonNull TelemetryPacket packet) {
-                setTwistPos(degree);
+                setDiffyTwistPos(degree);
                 return false;
             }
         };
@@ -430,6 +418,14 @@ public class Intake {
                 return false;
             }
         };
+    }
+
+    public void turnOffServos(){
+        claw.setPwmDisable();
+        trunkL.setPwmDisable();
+        trunkR.setPwmDisable();
+        inDiffyL.setPwmDisable();
+        inDiffyR.setPwmDisable();
     }
 
 
