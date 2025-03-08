@@ -5,6 +5,7 @@ import androidx.annotation.NonNull;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.Action;
+import com.acmerobotics.roadrunner.SequentialAction;
 import com.pedropathing.pathgen.MathFunctions;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.HardwareMap;
@@ -45,7 +46,7 @@ public class Intake {
         public static double TWIST_DEGREE_LIMIT = 180;//200
         public static double TWIST_POWER_COEFF = 4;
 
-        public static double WRIST_DEGREE_LIMIT = 20;//200
+        public static double WRIST_DEGREE_LIMIT = 30;//200
 
         public static double WRIST_POWER_COEFF = 4;
     }
@@ -106,11 +107,32 @@ public class Intake {
         setDiffyPos(pos, twistPos);
     }
 
+    public Action SetDiffyWristPos(double pos){
+        return new Action(){
+            @Override
+            public boolean run(@NonNull TelemetryPacket packet) {
+                setDiffyWristPos(pos);
+                return false;
+            }
+        };
+    }
+
     public void setDiffyTwistPos(double pos){
         updateDiffyPos();
         pos = MathFunctions.clamp(pos,0,diffyParams.TWIST_DEGREE_LIMIT);
         setDiffyPos(wristPos, pos);
     }
+
+    public Action SetDiffyTwistPos(double pos){
+        return new Action(){
+            @Override
+            public boolean run(@NonNull TelemetryPacket packet) {
+                setDiffyTwistPos(pos);
+                return false;
+            }
+        };
+    }
+
 
     private void setDiffyPos(double wrist, double twist){
         wrist/=diffyParams.DIFFY_DEGREE_MAX;
@@ -403,6 +425,17 @@ public class Intake {
         inDiffyL.setPwmDisable();
         inDiffyR.setPwmDisable();
     }
+
+    public Action TurnOffServos(){
+        return new Action(){
+            @Override
+            public boolean run(@NonNull TelemetryPacket packet) {
+                turnOffServos();
+                return false;
+            }
+        };
+    }
+
 
 
 

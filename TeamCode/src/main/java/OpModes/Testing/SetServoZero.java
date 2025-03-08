@@ -5,6 +5,7 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
 import sections.Intake;
 import sections.Lifters;
+import sections.Outake;
 
 
 @Autonomous(name = "Set ZERO", group = "Auto Debug")
@@ -15,12 +16,16 @@ public final class SetServoZero extends LinearOpMode {
 
         Lifters lift = new Lifters(hardwareMap);
         Intake intk = new Intake(hardwareMap);
+        Outake out = new Outake(hardwareMap);
 
         waitForStart();
-        intk.setClawPos(0);
-        intk.setElbowPos(0);
-        intk.diffyReset();
-        intk.setClaw
+        out.setClawClose();
+        out.setElbowPos(0);
+        out.diffyReset();
+
+//        intk.setClawClose();
+//        intk.setElbowPos(0);
+//        intk.diffyReset();
         while(opModeIsActive()){
 
         }

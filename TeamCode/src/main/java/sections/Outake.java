@@ -1,6 +1,9 @@
 package sections;
 
 import com.acmerobotics.dashboard.config.Config;
+import com.acmerobotics.roadrunner.Action;
+import com.acmerobotics.roadrunner.SequentialAction;
+import com.acmerobotics.roadrunner.SleepAction;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.ServoImplEx;
@@ -61,5 +64,21 @@ public class Outake extends Intake{
         diffyParams.DIFFY_DEGREE_MAX = ServoIntakeDiffyParams.DIFFY_DEGREE_MAX;
         diffyParams.TWIST_DEGREE_LIMIT = ServoIntakeDiffyParams.TWIST_DEGREE_LIMIT;
         diffyParams.WRIST_DEGREE_LIMIT = ServoIntakeDiffyParams.WRIST_DEGREE_LIMIT;
+    }
+
+    public Action transfer(Intake intk){
+        SleepAction delay = new SleepAction(.8);
+        return new SequentialAction(
+                intk.SetDiffyTwistPos(0),
+                intk.SetDiffyWristPos(0),
+                intk.SetElbowPos(0),
+                intk.SetClawClose(),
+                SetDiffyWristPos(0),
+                SetDiffyTwistPos(187.5),
+                SetElbowPos(90),
+                delay,
+                SetClawClose(),
+                intk.TurnOffServos()
+        );
     }
 }
