@@ -5,9 +5,6 @@ import androidx.annotation.NonNull;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.Action;
-import com.acmerobotics.roadrunner.ParallelAction;
-import com.acmerobotics.roadrunner.SequentialAction;
-import com.acmerobotics.roadrunner.SleepAction;
 import com.pedropathing.pathgen.MathFunctions;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.HardwareMap;
@@ -21,31 +18,28 @@ public class Intake {
         public static PwmControl.PwmRange pwmRange = new PwmControl.PwmRange(500,2500);
 
         double intakeSpeed = 1;
-        public double trunkMaxDegree = 190;//200
-        public double trunkServoMaxTurn = (360*5-180)/2;
-        public double trunkPowerCoeff = 2;
-
-        public double armMaxDegree = 300;//200
-        public double armServoMaxTurn = 300;
-        public double armPowerCoeff = 5;
-
-        public double clawMaxDegree = 85;//200
-        public double clawServoMaxTurn = 360*5-180;
-        public double clawPowerCoeff = 4;
 
     }
     @Config
-    public static class ServoTwistParams {
-        public static double TWIST_OFFSET = 90;
+    public static class ServoIntakeClawParams {
+        public static double CLAW_OFFSET = 0;
 
-        public static double TWIST_DEGREE_LIMIT = 180;//200
-        public static double TWIST_DEGREE_MAX = 300/2;
-        public static double TWIST_POWER_COEFF = 4;
+        public static double CLAW_DEGREE_LIMIT = 85;//200
+        public static double CLAW_DEGREE_MAX = 360*5;
+        public static double CLAW_POWER_COEFF = 4;
+    }
+    @Config
+    public static class ServoIntakeElbowParams {
+        public static double ELBOW_OFFSET = 0;
+
+        public static double ELBOW_DEGREE_LIMIT = 180;//200
+        public static double ELBOW_DEGREE_MAX = 300;
+        public static double ELBOW_POWER_COEFF = 4;
     }
 
     @Config
     public static class ServoIntakeDiffyParams {
-        public static double DIFFY_DEGREE_MAX = 150;
+        public static double DIFFY_DEGREE_MAX = 300;
         public static double TWIST_OFFSET = 90;
 
         public static double TWIST_DEGREE_LIMIT = 180;//200
@@ -68,32 +62,33 @@ public class Intake {
     boolean autoOveride = false;
     boolean clawOpen = false;
 
-    ServoTwistParams twistParams = new ServoTwistParams();
 
-    ServoIntakeDiffyParams diffyParams = new ServoIntakeDiffyParams();
+    public ServoIntakeClawParams clawParams = new ServoIntakeClawParams();
+    public ServoIntakeElbowParams elbowParams = new ServoIntakeElbowParams();
+    public ServoIntakeDiffyParams diffyParams = new ServoIntakeDiffyParams();
 
     Params PARAMS = new Params();
     CRServo intakeR, intakeL;
-    public ServoImplEx trunkR, trunkL, claw, inDiffyR, inDiffyL;
+    public ServoImplEx elbowR, elbowL, claw, inDiffyR, inDiffyL;
     public Intake(HardwareMap hardwareMap){
         claw = hardwareMap.get(ServoImplEx.class,"inClaw");
         claw.setPwmRange(Params.pwmRange);
 
-        trunkR = hardwareMap.get(ServoImplEx.class,"inTrunkR");
-        trunkR.setDirection(Servo.Direction.FORWARD);
-        trunkR.setPwmRange(Params.pwmRange);
+        elbowR = hardwareMap.get(ServoImplEx.class,"inElbowR");
+        elbowR.setDirection(Servo.Direction.REVERSE);
+        elbowR.setPwmRange(Params.pwmRange);
 
-        trunkL = hardwareMap.get(ServoImplEx.class,"inTrunkL");
-        trunkL.setDirection(Servo.Direction.REVERSE);
-        trunkL.setPwmRange(Params.pwmRange);
+        elbowL = hardwareMap.get(ServoImplEx.class,"inElbowL");
+        elbowL.setDirection(Servo.Direction.FORWARD);
+        elbowL.setPwmRange(Params.pwmRange);
 
         inDiffyR = hardwareMap.get(ServoImplEx.class,"inDiffyR");
         inDiffyR.setPwmRange(Params.pwmRange);
-        inDiffyR.setDirection(Servo.Direction.FORWARD);
+        inDiffyR.setDirection(Servo.Direction.REVERSE);
 
         inDiffyL = hardwareMap.get(ServoImplEx.class,"inDiffyL");
         inDiffyL.setPwmRange(Params.pwmRange);
-        inDiffyL.setDirection(Servo.Direction.REVERSE);
+        inDiffyL.setDirection(Servo.Direction.FORWARD);
 
     }
 
@@ -132,18 +127,27 @@ public class Intake {
     }
 
     public void setClawPos(double degree){
-        double pos = Math.max(Math.min(degree,PARAMS.clawMaxDegree),0); //sets a limit to what you can set the servo position to go to
+        double pos = Math.max(Math.min(degree,clawParams.CLAW_DEGREE_LIMIT),0); //sets a limit to what you can set the servo position to go to
 
-        pos/=PARAMS.clawServoMaxTurn; //converts from degrees(0-360) to servo position(0-1)
+        pos/=clawParams.CLAW_DEGREE_MAX; //converts from degrees(0-360) to servo position(0-1)
 
         claw.setPosition(pos);
+    }
+
+    public void setClawOpen(){
+        setClawPos(65);
+        clawOpen = true;
+    }
+
+    public void setClawClose(){
+        setClawPos(65);
+        clawOpen = true;
     }
     public Action SetClawClose(){
         return new Action(){
             @Override
             public boolean run(@NonNull TelemetryPacket packet) {
-                setClawPos(0);
-                clawOpen = false;
+                setClawClose();
                 return false;
             }
         };
@@ -153,8 +157,7 @@ public class Intake {
         return new Action(){
             @Override
             public boolean run(@NonNull TelemetryPacket packet) {
-                setClawPos(65);
-                clawOpen = true;
+                setClawOpen();
                 return false;
             }
         };
@@ -232,46 +235,19 @@ public class Intake {
 //        trunkL.setPosition(pos+(trunkOffset/PARAMS.trunkServoMaxTurn));
 //    }
 
-    public void setTrunkWall(){
-        double degree = 10;
-        double pos = Math.max(Math.min(degree,PARAMS.trunkMaxDegree),0); //sets a limit to what you can set the servo position to go to
+    public void setElbowPos(double degree){
+        double pos = Math.max(Math.min(degree,elbowParams.ELBOW_DEGREE_LIMIT),0); //sets a limit to what you can set the servo position to go to
 
-        pos/=PARAMS.trunkServoMaxTurn; //converts from degrees(0-360) to servo position(0-1)
+        pos/=elbowParams.ELBOW_DEGREE_MAX; //converts from degrees(0-360) to servo position(0-1)
 
-        trunkR.setPosition(pos+(trunkOffset/PARAMS.trunkServoMaxTurn));
-        trunkL.setPosition(pos+(trunkOffset/PARAMS.trunkServoMaxTurn));
+        elbowR.setPosition(pos+(elbowParams.ELBOW_OFFSET/elbowParams.ELBOW_DEGREE_MAX));
+        elbowL.setPosition(pos+(elbowParams.ELBOW_OFFSET/elbowParams.ELBOW_DEGREE_MAX));
     }
-
-    public void setTrunkHoop(){
-        double degree = 60;
-        double pos = Math.max(Math.min(degree,PARAMS.trunkMaxDegree),0); //sets a limit to what you can set the servo position to go to
-
-        pos/=PARAMS.trunkServoMaxTurn; //converts from degrees(0-360) to servo position(0-1)
-
-        trunkR.setPosition(pos+(trunkOffset/PARAMS.trunkServoMaxTurn));
-        trunkL.setPosition(pos+(trunkOffset/PARAMS.trunkServoMaxTurn));
-    }
-
-    public void setTrunkPower(double pow){
-        if(!autoOveride) {
-            armPos = PARAMS.trunkServoMaxTurn * (trunkR.getPosition()) - trunkOffset;
-            setTrunkPos(armPos + pow * 4);
-        }
-    }
-
-    public void setTrunkPos(double degree){
-        double pos = Math.max(Math.min(degree,PARAMS.trunkMaxDegree),0); //sets a limit to what you can set the servo position to go to
-
-        pos/=PARAMS.trunkServoMaxTurn; //converts from degrees(0-360) to servo position(0-1)
-
-        trunkR.setPosition(pos+(trunkOffset/PARAMS.trunkServoMaxTurn));
-        trunkL.setPosition(pos+(trunkOffset/PARAMS.trunkServoMaxTurn));
-    }
-    public Action SetTrunkPos(double degree){
+    public Action SetElbowPos(double degree){
         return new Action(){
             @Override
             public boolean run(@NonNull TelemetryPacket packet) {
-                setTrunkPos(degree);
+                setElbowPos(degree);
                 return false;
             }
         };
@@ -422,8 +398,8 @@ public class Intake {
 
     public void turnOffServos(){
         claw.setPwmDisable();
-        trunkL.setPwmDisable();
-        trunkR.setPwmDisable();
+        elbowL.setPwmDisable();
+        elbowR.setPwmDisable();
         inDiffyL.setPwmDisable();
         inDiffyR.setPwmDisable();
     }

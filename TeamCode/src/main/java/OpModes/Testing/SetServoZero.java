@@ -1,10 +1,8 @@
 package OpModes.Testing;
 
-import com.pedropathing.pathgen.PathChain;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
-import sections.Drive;
 import sections.Intake;
 import sections.Lifters;
 
@@ -20,9 +18,9 @@ public final class SetServoZero extends LinearOpMode {
 
         waitForStart();
         intk.setClawPos(0);
-        intk.setElbowPos(23);
-        intk.setTrunkPos(190);
-        intk.setTwistPos(90);
+        intk.setElbowPos(0);
+        intk.diffyReset();
+        intk.setClaw
         while(opModeIsActive()){
 
         }

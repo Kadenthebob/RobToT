@@ -2,16 +2,12 @@ package OpModes.Testing;
 
 import com.acmerobotics.roadrunner.ParallelAction;
 import com.acmerobotics.roadrunner.SequentialAction;
-import com.acmerobotics.roadrunner.SleepAction;
 import com.acmerobotics.roadrunner.ftc.Actions;
-import com.pedropathing.util.Constants;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.pedropathing.localization.Pose;
 import com.pedropathing.pathgen.*;
 
-import pedroPathing.constants.FConstants;
-import pedroPathing.constants.LConstants;
 import sections.*;
 
 
@@ -71,7 +67,7 @@ public final class AutoGrabTest extends LinearOpMode {
                                 lift.setVertLifterPos(800,1),
                                 intk.SetClawOpen(),
                                 intk.SetElbowPos(23),
-                                intk.SetTrunkPos(175),
+                                intk.SetElbowPos(175),
                                 intk.SetTwistPos(90),
                                 follower.AutoGrab(cam, intk, lift),
                                 lift.setVertLifterPos(200,1),
